@@ -34,6 +34,7 @@ stiller:
 reklam:
   fiyat_goster: false             # Stüdyo kararı: reklamlarda fiyat YOK (kontrol.py denetler)
   ucretsiz_tasarim_gorusmesi: true
+  tasarim_gorusmesi_tanim: "Görüşme ücretsiz ve bağlayıcı değil; çizim kaporayla başlar, kapora fiyattan düşülür."
   ucretsiz_rotus: true            # Sahibi onayladı. AMA süre/şart belli olana kadar reklam metninde YOK (kurul kararı)
   rotus_suresi_ay: null           # SAHİBE SOR: "ilk X ay, bakım talimatına uyulması şartıyla"
   kvkk_link: "landing/kvkk.html"  # yayınlanınca tam adres yazılacak
@@ -87,8 +88,18 @@ kpi:
   gun14_min_ciddi_talep: 10
   gun30_min_kapora: 2
   gun45_min_rezerve_kat: 1.5      # rezerve ciro ≥ harcama × 1,5
-  test_kayip_tavani_tl: 20000     # SAHİP ONAYINA SUNULDU
-  max_gunluk_tl_onaysiz: 450      # %20'lik artışlar burada durur; üstü yeni onay
+  test_kayip_tavani_tl: 20000     # SAHİP ONAYINA SUNULDU. Kayıp = kümülatif reklam çıkışı (ücret dahil) − reklamdan TAHSİL edilen
+  # 313 TL/gün üstündeki HER artış sahibin açık onayıyla (tek istisna aşağıda, sahip ön onaylar)
+  gun7_ogrenme_istisnasi:
+    kosul: "7. gün sohbet başı 45–50 TL VE ciddi talep oranı ≥ %30"
+    formul: "günlük = 7,2 × sohbet başı (50 sohbet/hafta)"
+    tavan_tl: 360                 # ≈ 11.500 TL/ay ücret dahil
+  max_gunluk_tl_sahip_onayli: 450 # Faz 2 tavanı ≈ 14.400 TL/ay; her %20'lik adım sahip onaylı
+  faz2_en_erken_gun: 14
+  kapora_basi_durdur_en_erken_gun: 30
+  tekrar_yazan_esik: 0.15         # CSV'de tekrar yazan oranı > %15 → hariç tutma Politika ile yeniden değerlendirilir
+  # Tanımlar: rezerve ciro = tahsil + kalan rezerve (kaporalı işlerin kalan tutarı) ·
+  # harcama.csv ÜCRET DAHİL girilir (Ads Manager harcaması × 1,05) · cevap medyanı = haftada 10 sohbet örneği
 
 kapasite:
   max_tasarim_gorusmesi_hafta: 8

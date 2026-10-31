@@ -145,26 +145,49 @@ def main():
         p(f"| {kod} | {v['talep']:.0f} | {v['ciddi']:.0f} | {v['randevu']:.0f} | "
           f"%{100 * v['randevu'] / v['talep']:.0f} | {tl(v['ciro'])} |")
 
-    # ---- Karar kuralları ----
+    # ---- Karar kuralları (kurul tur 2: bütçe artışı SADECE Faz 2 kontrol listesi + sahip onayıyla) ----
     oneriler = []
+    ilk = min([d for d in tarihler if d] or [son])
+    gun = (son - ilk).days + 1
     for k, v in sorted(kamp.items()):
         h = v["harcama_tl"]
-        if h == 0:
+        if h == 0 or k in ("ORGANIK", "BILINMIYOR"):
             continue
-        if v["randevu"] and h / v["randevu"] > kapora_dur and h >= kapora_dur:
-            oneriler.append(f"🔴 **{k}**: kapora başı {tl(h / v['randevu'])} TL > durdurma eşiği {tl(kapora_dur)}. Kurul kuralı: durdur ve revize et.")
+        if h > kapora_dur and (not v["randevu"] or h / v["randevu"] > kapora_dur) and gun >= kpi.get("kapora_basi_durdur_en_erken_gun", 30):
+            oneriler.append(f"🔴 **{k}**: {tl(h)} TL harcandı, kapora başı > {tl(kapora_dur)} TL (ya da hiç kapora yok). Kurul kuralı: DURDUR ve revize et.")
+        elif h > kapora_dur and not v["randevu"]:
+            oneriler.append(f"🟠 **{k}**: {tl(h)} TL harcandı ve henüz kapora yok. {kpi.get('kapora_basi_durdur_en_erken_gun', 30)}. günde hâlâ yoksa durdurulur.")
         if v["mesaj"]:
             mb = h / v["mesaj"]
-            if mb > kpi.get("gun7_durdur_mesaj_basi_tl", 2 * hedef_mesaj) and h >= 1000:
-                oneriler.append(f"🔴 **{k}**: sohbet başı {tl(mb)} TL (hedef {hedef_mesaj}). En kötü 2 reklamı kapat, yeni kanca dene.")
-            elif mb < 0.7 * hedef_mesaj:
-                oneriler.append(f"🟢 **{k}**: mesaj başı {tl(mb)} TL — hedefin altında. Bütçeyi 3 günde bir %20 artır.")
-        roas = v["ciro"] / h if h else 0
-        if v["randevu"] >= 2 and roas >= 5:
-            oneriler.append(f"🟢 **{k}**: ROAS {roas:.1f}x. Bu kampanya para basıyor — bütçe artışında öncelik bunda.")
+            if mb > kpi.get("gun7_durdur_mesaj_basi_tl", 2 * hedef_mesaj) and gun >= 7:
+                oneriler.append(f"🔴 **{k}**: sohbet başı {tl(mb)} TL (hedef {hedef_mesaj}). En kötü 2 reklamı kapat, yeni kanca dene (7. gün tek düzenleme).")
+            ciddi_oran = v["ciddi"] / v["talep"] if v["talep"] else 0
+            if 45 <= mb <= 50 and ciddi_oran >= 0.30 and 7 <= gun < 14:
+                yeni = min(kpi.get("gun7_ogrenme_istisnasi", {}).get("tavan_tl", 360), round(7.2 * mb))
+                oneriler.append(f"🟡 **{k}**: öğrenme istisnası koşulu sağlandı → günlük bütçe {yeni} TL (sahibin ön onayıyla).")
         if v["talep"] >= 8 and v["randevu"] / v["talep"] < 0.10:
             oneriler.append(f"🟠 **{k}**: {v['talep']:.0f} talepten {v['randevu']:.0f} randevu. Sorun büyük ihtimalle reklamda değil, "
-                            "mesaj sürecinde → docs/07-mesaj-scriptleri.md (5 dk içinde cevap + fiyatla birlikte soru sor).")
+                            "mesaj sürecinde → docs/07-mesaj-scriptleri.md (≤ 30 dk cevap + fiyat aralığıyla birlikte soru sor).")
+        # Faz 2 kontrol listesi
+        ciddi_oran = v["ciddi"] / v["talep"] if v["talep"] else 0
+        mb = h / v["mesaj"] if v["mesaj"] else 0
+        liste = [
+            (f"en erken {kpi.get('faz2_en_erken_gun', 14)}. gün (şu an {gun})", gun >= kpi.get("faz2_en_erken_gun", 14)),
+            (f"≥ 60 sohbet ({v['mesaj']:.0f})", v["mesaj"] >= 60),
+            (f"sohbet başı ≤ 50 TL ({tl(mb) if mb else '–'})", 0 < mb <= 50),
+            (f"ciddi talep ≥ %30 (%{100 * ciddi_oran:.0f})", ciddi_oran >= 0.30),
+            (f"≥ 2 kapora ({v['randevu']:.0f})", v["randevu"] >= 2),
+        ]
+        tamam = all(ok for _, ok in liste)
+        isaret = " · ".join(("✔ " if ok else "✘ ") + ad for ad, ok in liste)
+        oneriler.append(f"{'🟢' if tamam else '⏳'} **{k} Faz 2 kontrolü:** {isaret} · ? 30 gün içinde ≥ 6 boş seans · ? cevap medyanı ≤ 30 dk"
+                        + (" → iki elle kontrol de ✔ ise **sahibin onayıyla** 3 günde bir %20 artış (tavan 450 TL/gün)." if tamam else ""))
+    tekrar = [m for m in musteriler if (m.get("tekrar") or "").strip().lower() == "e"]
+    if musteriler and "tekrar" in musteriler[0]:
+        oran = len(tekrar) / len(musteriler)
+        esik = kpi.get("tekrar_yazan_esik", 0.15)
+        if oran > esik:
+            oneriler.append(f"🟠 Tekrar yazanların oranı %{100 * oran:.0f} > %{100 * esik:.0f}: hariç tutma kararı Politika üyesiyle yeniden değerlendirilmeli.")
     bekleyen = [m for m in musteriler if (m.get("durum") or "").strip() in ("yeni", "fiyat_verildi")]
     if bekleyen:
         oneriler.append(f"📲 **{len(bekleyen)} açık talep** (yeni / fiyat verildi). Bugün takip mesajı at: "

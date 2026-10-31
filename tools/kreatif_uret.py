@@ -37,6 +37,7 @@ S = 1            # ölçek: 1 = 1080p, 2 = 4K
 M: dict = {}     # marka
 ISL: dict = {}   # işleme ayarları
 UYARILAR: list[str] = []
+MUZIK_OFSET = 0.0  # --muzik-ofset: parçanın ilk vuruşu kaçıncı saniyede (kesmeler vuruşa oturur)
 
 
 def u(x: float) -> int:
@@ -211,12 +212,15 @@ def hikaye_9x16(im, oge, yazi):
     W, H = u(1080), u(1920)
     c, _ = doldur(im, oge, W, H, merkez_y=u(860))
 
+    f = font("InterDisplay-Bold.otf", 66)
+    satirlar = satir_bol(yazi, f, u(940))
+
     def ciz(d):
-        f = font("InterDisplay-Bold.otf", 66)
-        for i, s in enumerate(satir_bol(yazi, f, u(940))):
+        for i, s in enumerate(satirlar):
             yaz_orta(d, W / 2, u(300) + i * u(80), s, f, KEMIK)
-        imza(d, W, u(1062))
-    return ustune(c, scrim((W, H), True, u(600), 0.8), katman((W, H), ciz), teklif_etiketi((W, H), u(1160)))
+    # Kurul tur 2: imza yok (hesap adı reklamda görünüyor); teklif başlığın altında → 480–1248 sadece dövme
+    return ustune(c, scrim((W, H), True, u(640), 0.85), katman((W, H), ciz),
+                  teklif_etiketi((W, H), u(300) + len(satirlar) * u(80) + u(12)))
 
 
 def kapanis_karti(W, H, mod="reklam", baslik=None, alt=None, uzmanlik=None):
@@ -247,12 +251,12 @@ def kapanis_karti(W, H, mod="reklam", baslik=None, alt=None, uzmanlik=None):
 
 # ---------------------------------------------------------------- video
 class Yazici:
-    def __init__(self, yol: Path, sure: float, ses: Path | None = None, muzik: Path | None = None):
+    def __init__(self, yol: Path, sure: float, ses: Path | None = None, muzik: Path | None = None, ofset: float = 0.0):
         W, H = u(1080), u(1920)
         k = ["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}",
              "-r", str(FPS), "-i", "-"]
         if muzik:
-            k += ["-i", str(muzik), "-map", "0:v", "-map", "1:a",
+            k += ["-ss", f"{ofset:.3f}", "-i", str(muzik), "-map", "0:v", "-map", "1:a",
                   "-af", f"afade=t=in:d=0.3,afade=t=out:st={max(0, sure - 0.6):.2f}:d=0.6"]
         elif ses:
             k += ["-i", str(ses), "-map", "0:v", "-map", "1:a", "-af", "apad"]
@@ -321,19 +325,25 @@ def video_sure(yol):
 
 def r1_uret(V, fotolar, ogeler, muzik):
     W, H = u(1080), u(1920)
-    n_ac, n_cek, n_kes, n_kap = 60, 36, int(V["kesme_suresi"] * FPS), int(V["kapanis_suresi"] * FPS)
+    vurus = 60 / V.get("bpm", 100)                       # 100 BPM → 0,6 sn
+    n_tut, n_cek = round(vurus * FPS), round(2 * vurus * FPS)   # 0–0,6 sn sabit · 0,6–1,2 sn geri çekil
+    n_ac = round(4 * vurus * FPS)                        # açılış 4 vuruş (2,4 sn)
+    n_kes, n_kap = round(2 * vurus * FPS), round(3 * vurus * FPS)
     toplam = n_ac + n_kes * len(V["kesmeler"]) + n_kap
-    y = Yazici(CIKTI / "video" / V["cikti"], toplam / FPS, muzik=muzik)
+    y = Yazici(CIKTI / "video" / V["cikti"], toplam / FPS, muzik=muzik, ofset=MUZIK_OFSET)
     acilis = ogeler[V["acilis"]]
     c, harita = doldur(fotolar[V["acilis"]], acilis, W, H, merkez_y=u(860))
     gx, gy = harita(*acilis.get("goz", acilis["odak"]))
     k1, k2 = ust_yazi(V["kanca"]), ust_yazi(V["kanca2"], V.get("kanca2_alt"))
-    for i in range(n_ac):                       # 0–1,2 sn: gözlerden geri çekil · 1,2–2,0 sn: tut
-        if i < n_cek:
-            e = 1 - (1 - i / (n_cek - 1)) ** 3
+    for i in range(n_ac):
+        if i < n_tut:                                    # gözler 1,8x sabit, kanca okunur
+            y.yaz(ustune(yakinlas(c, 1.8, gx, gy), k1))
+        elif i < n_cek:                                  # yumuşak geri çekilme (ease-in-out)
+            tt = (i - n_tut) / max(1, n_cek - n_tut - 1)
+            e = tt * tt * (3 - 2 * tt)
             kare = yakinlas(c, 1.8 + (1.0 - 1.8) * e, gx + (W / 2 - gx) * e, gy + (H / 2 - gy) * e)
             y.yaz(ustune(kare, k1))
-        else:
+        else:                                            # "Bu bir dövme." 1,2–2,4 sn
             y.yaz(ustune(c, k2))
     for kod in V["kesmeler"]:                    # sert kesmeler, vuruşa oturur
         ck, _ = doldur(fotolar[kod], ogeler[kod], W, H, merkez_y=u(860))
@@ -394,7 +404,10 @@ def main():
     ap.add_argument("--sadece", choices=["foto", "video"])
     ap.add_argument("--cozunurluk", choices=["1080", "4k"], default="1080")
     ap.add_argument("--muzik", type=Path, help="Meta Ses Koleksiyonu'ndan indirilen parça (mp3/wav)")
+    ap.add_argument("--muzik-ofset", type=float, default=0.0, help="Parçanın ilk vuruşunun saniyesi")
     a = ap.parse_args()
+    global MUZIK_OFSET
+    MUZIK_OFSET = a.muzik_ofset
     if a.cozunurluk == "4k":
         S, CIKTI = 2, KOK / "kreatif" / "cikti_4k"
     K = yaml.safe_load((KOK / "kreatif" / "kreatif.yaml").read_text(encoding="utf-8"))

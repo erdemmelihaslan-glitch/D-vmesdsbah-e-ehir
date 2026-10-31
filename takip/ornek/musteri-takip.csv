@@ -1,10 +1,10 @@
-tarih,musteri,kaynak_kodu,stil,durum,teklif_tl,kapora_tl,odenen_tl,randevu_tarihi,yorum_istendi,not
-2026-11-02,A.Y.,R1,black&grey ön kol,tamamlandi,9000,2000,9000,2026-11-06,e,tek seans
-2026-11-02,M.K.,C1,black&grey kol projesi,kapora,30000,3000,3000,2026-11-14,h,3 seans planlandı
-2026-11-03,S.D.,R1,portre,fiyat_verildi,14000,0,0,,h,referans foto geldi
-2026-11-03,E.T.,F5,yarım kalan bacak,kayip,25000,0,0,,h,takvim uzak dedi
-2026-11-03,B.A.,F3,karakter realizm,kapora,12000,2000,2000,2026-11-20,h,
-2026-11-04,C.Ö.,R1,kapatma,fiyat_verildi,8000,0,0,,h,fotoğraf geldi
-2026-11-05,F.G.,C1,black&grey baldır,yeni,,,,,h,
-2026-11-05,H.İ.,ORG-GMB,blackwork,tamamlandi,6000,1500,6000,2026-11-08,e,
-2026-11-06,N.P.,F5,kol projesi,fiyat_verildi,28000,0,0,,h,
+tarih,musteri,kaynak_kodu,stil,durum,teklif_tl,kapora_tl,odenen_tl,randevu_tarihi,yorum_istendi,not,tekrar
+2026-11-02,A.Y.,R1,black&grey ön kol,tamamlandi,9000,2000,9000,2026-11-06,e,tek seans,h
+2026-11-02,M.K.,C1,black&grey kol projesi,kapora,30000,3000,3000,2026-11-14,h,3 seans planlandı,h
+2026-11-03,S.D.,R1,portre,fiyat_verildi,14000,0,0,,h,referans foto geldi,e
+2026-11-03,E.T.,F5,yarım kalan bacak,kayip,25000,0,0,,h,takvim uzak dedi,h
+2026-11-03,B.A.,F3,karakter realizm,kapora,12000,2000,2000,2026-11-20,h,,h
+2026-11-04,C.Ö.,R1,kapatma,fiyat_verildi,8000,0,0,,h,fotoğraf geldi,h
+2026-11-05,F.G.,C1,black&grey baldır,yeni,,,,,h,,h
+2026-11-05,H.İ.,ORG-GMB,blackwork,tamamlandi,6000,1500,6000,2026-11-08,e,,h
+2026-11-06,N.P.,F5,kol projesi,fiyat_verildi,28000,0,0,,h,,h

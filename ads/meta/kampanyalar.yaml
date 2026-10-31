@@ -1,7 +1,9 @@
 # ============================================================
 #  META KAMPANYA YAPISI v2: Erdem Melih Tattoo Studio (kurul tur 1 kararlarıyla)
 #  {alan} yerleri config/studio.yaml'dan doldurulur. Kontrol: python3 tools/kontrol.py
-#  faz: 1 = ilk günden · 2 = 6. günden itibaren (ret riski düşük görüldükten sonra) · bekliyor = malzeme gelince
+#  faz: 1 = ilk günden · 2 = 7. GÜN TEK DÜZENLEMEDE (en kötü 2 reklam kapanır + faz 2 eklenir; öğrenme bir kez sıfırlanır)
+#        sonraki eklemeler en az 7 gün arayla · bekliyor = malzeme gelince (V1 yayın kapısında)
+#  kreatif_kodlari: reklamda görünen işler → kreatif/onaylar.csv'de müşteri onayı ŞART (kontrol.py --yayin)
 #  Kod hazır mesajın SONUNA "(R1)" şeklinde eklenir; hızlı soruların sonuna da eklenir.
 # ============================================================
 
@@ -44,6 +46,7 @@ kampanyalar:
         haric: ["Instagram'dan son 30 günde mesaj gönderenler"]
         reklamlar:
           - kod: R1
+            kreatif_kodlari: [F05, F03, F06, F02]
             faz: 1
             format: reels
             kreatif: "kreatif/cikti/video/R1-once-gozlere-bak.mp4 (+ Meta Ses Koleksiyonu müziği gömülü)"
@@ -52,13 +55,14 @@ kampanyalar:
               Önce gözlere bak: bu bir dövme. 🖤
               Tek kullanımlık iğne · sterilize ekipman · iyileşme takibi.
               Black & grey realizm, Bahçeşehir'de. Her tasarım sana özel çiziliyor; ücretsiz tasarım görüşmesiyle başlıyoruz.
-              Fiyat boyuta ve detaya göre değişir; görüşmede net bilgi veriyoruz.
+              Fiyat boyuta ve detaya göre değişir; fotoğrafını gönder, ilk cevapta yaklaşık aralığı ve seans sayısını yazalım.
               📍 Bahçeşehir · {studyo_adi}
             baslik: "Realizm projeni konuşalım"
             cta: WHATSAPP_MESSAGE
             karsilama: "Merhaba! Realizm dövme projem için görüşmek istiyorum."
 
           - kod: C1
+            kreatif_kodlari: [F05, F03, F02, F06]
             faz: 1
             format: carousel
             kreatif: "kreatif/cikti/carousel/kart01…05 (F05, F03, F02, F06, kapanış)"
@@ -66,13 +70,14 @@ kampanyalar:
             metin: |
               Kol, bacak, ön kol: tende hikâye anlatan black & grey realizm.
               Tek kullanımlık iğne · sterilize ekipman · iyileşme takibi.
-              Tüm işler {sanatci}'ın kendi çalışması. Fikrini yaz, ücretsiz tasarım görüşmesinde birlikte çizelim.
+              Tüm işler {sanatci}'ın kendi çalışması. Fikrini yaz, ücretsiz tasarım görüşmesinde birlikte netleştirelim.
               📍 Bahçeşehir · {studyo_adi}
             baslik: "Sıradaki hikâye senin"
             cta: WHATSAPP_MESSAGE
             karsilama: "Merhaba! İşlerinizi gördüm, dövme projem için görüşmek istiyorum."
 
           - kod: F3
+            kreatif_kodlari: [F03]
             faz: 1
             format: tekli_gorsel
             kreatif: "akis_4x5/F03.jpg + hikaye_9x16/F03.jpg"
@@ -86,6 +91,7 @@ kampanyalar:
             karsilama: "Merhaba! Bir dövme fikrim var, tasarım görüşmesi istiyorum."
 
           - kod: F5
+            kreatif_kodlari: [F05]
             faz: 1
             format: tekli_gorsel
             kreatif: "akis_4x5/F05.jpg + hikaye_9x16/F05.jpg"
@@ -99,6 +105,7 @@ kampanyalar:
             karsilama: "Merhaba! Kol/bacak projem için görüşmek istiyorum."
 
           - kod: V1
+            kreatif_kodlari: [V1]
             faz: bekliyor
             format: reels
             kreatif: "Erdem Melih konuşma videosu (docs/12 → Video A). ÇEKİLİNCE kurgulanacak. YAYIN ÖN ŞARTI."
@@ -114,7 +121,9 @@ kampanyalar:
 
           # ---- FAZ 2 (6. günden itibaren, ret yoksa) ayrı tekli reklamlar ----
           - kod: R2
+            kreatif_kodlari: [R2-SUREC, F04]
             faz: 2
+            kosul: "SADECE R3 (black & grey süreç) aynı düzenlemede yayına giriyorsa. R2+F4 3 gün üst üste set harcamasının %40'ını aşarsa ya da renkli kodlu sohbetler %30'u geçerse ikisi birden durdurulur."
             format: reels
             kreatif: "kreatif/cikti/video/R2-surecten-sonuca-renkli.mp4"
             ekran_yazisi: "Bu baldır böyle yapıldı. → Sonuç. Renkte de aynı ustalık."
@@ -128,6 +137,7 @@ kampanyalar:
             karsilama: "Merhaba! Renkli realizm dövme için görüşmek istiyorum."
 
           - kod: F1
+            kreatif_kodlari: [F01]
             faz: 2
             format: tekli_gorsel
             kreatif: "akis_4x5/F01.jpg + hikaye_9x16/F01.jpg"
@@ -141,7 +151,9 @@ kampanyalar:
             karsilama: "Merhaba! Karakter/karanlık tema bir dövme için görüşmek istiyorum."
 
           - kod: F4
+            kreatif_kodlari: [F04]
             faz: 2
+            kosul: "SADECE R3 (black & grey süreç) aynı düzenlemede yayına giriyorsa. R2+F4 3 gün üst üste set harcamasının %40'ını aşarsa ya da renkli kodlu sohbetler %30'u geçerse ikisi birden durdurulur."
             format: tekli_gorsel
             kreatif: "akis_4x5/F04.jpg + hikaye_9x16/F04.jpg"
             metin: |
@@ -168,13 +180,14 @@ kampanyalar:
         kitle: ozel
         reklamlar:
           - kod: B1V
+            kreatif_kodlari: [V1]
             faz: 2
             format: reels
             kreatif: "V1 konuşma videosu veya iyileşmiş yan yana görsel"
             metin: |
               Fikrin henüz net değil mi?
               Tek kullanımlık iğne · sterilize ekipman · iyileşme takibi.
-              Bir fotoğraf ya da bir anı yeter; gerisini ücretsiz tasarım görüşmesinde birlikte çizeriz.
+              Bir fotoğraf ya da bir anı yeter; gerisini ücretsiz tasarım görüşmesinde birlikte netleştiririz.
               📍 Bahçeşehir
             baslik: "Ücretsiz tasarım görüşmesi"
             cta: WHATSAPP_MESSAGE

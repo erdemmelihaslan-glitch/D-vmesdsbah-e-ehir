@@ -11,11 +11,13 @@ Müşteriye şu mesajı gönder. **"Onaylıyorum"** cevabının ekran görüntü
 > • Görüntüde sadece dövme ve dövmenin olduğu bölge yer alacak.
 > • İstediğin zaman bu mesaja "geri alıyorum" yazarak onayını geri çekebilirsin. Reklamı 24 saat içinde durdururuz.
 > • Kişisel verilerinle ilgili aydınlatma metni: {kvkk_link}
+> Bu izin tamamen isteğe bağlıdır; vermemen hizmeti hiçbir şekilde etkilemez.
 > Onaylıyorsan **"Onaylıyorum"** yazman yeterli. Teşekkürler 🖤
 
 ## B) Yeni müşteriler için (seans öncesi onam formuna eklenecek kutu)
 > ☐ Dövmemin fotoğraf ve videolarının, yüzüm gösterilmeden ve adım yazılmadan, Erdem Melih Tattoo Studio'nun **sosyal medya hesaplarında ve ücretli reklamlarında** kullanılmasına izin veriyorum. Bu izni istediğim zaman geri alabilirim; geri aldığımda reklamlar en geç 24 saat içinde durdurulur.
 > ☐ Kampanya ve flash günü duyurularını WhatsApp'tan almak istiyorum (İYS). (İsteğe bağlı)
+> Bu izinler isteğe bağlıdır; vermemen hizmeti etkilemez.
 > Ad Soyad · Tarih · İmza
 
 ## C) Kayıt: `kreatif/onaylar.csv`

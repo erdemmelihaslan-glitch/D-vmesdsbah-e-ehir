@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Reklam setinin sağlık kontrolü.
 
-    python3 tools/kontrol.py
+    python3 tools/kontrol.py            # günlük kontrol
+    python3 tools/kontrol.py --yayin    # YAYIN KAPISI: onaysız kreatif = HATA
 
 Denetler:
   - studio.yaml'da doldurulmamış alanlar
@@ -17,7 +18,7 @@ from __future__ import annotations
 import re
 import sys
 
-from ortak import ayarlar, degiskenler, doldur, doldurulmamis, stil_acik, yukle
+from ortak import KOK, ayarlar, degiskenler, doldur, doldurulmamis, stil_acik, yukle
 
 # Kanıtlanamayan üstünlük iddiaları, sağlık iddiaları, görünüşü aşağılayan ifadeler
 RISKLI = {
@@ -152,7 +153,51 @@ def google_kontrol(cfg, d):
     return sayac
 
 
+def onay_kontrol(yayin_fazi):
+    """Reklamda görünen her iş için kreatif/onaylar.csv'de geçerli müşteri onayı var mı?
+    --yayin 1 → faz 1 + 'bekliyor' reklamları HATA; --yayin 2 → faz 2 de HATA. Normal modda UYARI."""
+    import csv
+    yol = KOK / "kreatif" / "onaylar.csv"
+    gecerli = set()
+    if yol.exists():
+        with open(yol, encoding="utf-8-sig") as f:
+            for r in csv.DictReader(f):
+                if (r.get("kreatif_kodu") or "").strip() and not (r.get("geri_alindi") or "").strip():
+                    gecerli.add(r["kreatif_kodu"].strip().upper())
+    meta = yukle("ads/meta/kampanyalar.yaml")
+    for k in meta.get("kampanyalar", []):
+        for s in k.get("reklam_setleri", []):
+            for r in s.get("reklamlar", []):
+                faz = str(r.get("faz", 1))
+                eksik = [c for c in r.get("kreatif_kodlari", []) if c.upper() not in gecerli]
+                if not eksik:
+                    continue
+                m = f"Meta {r['kod']} (faz {faz}): müşteri onayı yok → {', '.join(eksik)} (kreatif/onaylar.csv, docs/13)"
+                zorunlu = yayin_fazi and (faz in ("1", "bekliyor") or (faz == "2" and yayin_fazi >= 2))
+                (hata if zorunlu else uyari)(m)
+
+
+def sablon_kontrol():
+    """docs/07 müşteri mesaj şablonlarını tarar (fiyat serbest; riskli ifade, 'steril ortam', şartsız rötuş yasak)."""
+    global FIYAT_YASAK
+    yol = KOK / "docs" / "07-mesaj-scriptleri.md"
+    if not yol.exists():
+        return
+    eski, FIYAT_YASAK = FIYAT_YASAK, False
+    for no, satir in enumerate(yol.read_text(encoding="utf-8").splitlines(), 1):
+        if satir.lstrip().startswith(">"):
+            riskli_tara(f"docs/07 satır {no}", satir)
+            if re.search(r"(?<!\w)steril(?!ize)", tr_kucuk(satir)):
+                hata(f"docs/07 satır {no}: 'steril' → 'sterilize ekipman' yaz")
+    FIYAT_YASAK = eski
+
+
 def main():
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--yayin", nargs="?", const=1, type=int, default=0,
+                    help="Yayın kapısı kontrolü: 1 = ilk gün, 2 = 7. gün düzenlemesi (onaysız kreatif HATA olur)")
+    yayin = ap.parse_args().yayin
     global FIYAT_YASAK, ROTUS_KOSULSUZ
     cfg = ayarlar()
     FIYAT_YASAK = not cfg.get("reklam", {}).get("fiyat_goster", True)
@@ -161,6 +206,8 @@ def main():
     config_kontrol(cfg)
     n_meta = meta_kontrol(cfg, d)
     n_google = google_kontrol(cfg, d)
+    onay_kontrol(yayin)
+    sablon_kontrol()
 
     print(f"✔ {n_meta} Meta reklamı, {n_google} Google reklam grubu kontrol edildi.\n")
     if uyarilar:

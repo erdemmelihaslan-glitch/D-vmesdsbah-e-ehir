@@ -45,7 +45,7 @@ hikaye_yazilari:
 carousel:
   sira: [F05, F03, F02, F06]
   kapanis_baslik: "Sıradaki hikâye senin."
-  kapanis_alt: "Fikrini yaz, tasarımı birlikte çizelim."
+  kapanis_alt: "Fikrini yaz, tasarımı birlikte netleştirelim."
 
 videolar:
   R1:
@@ -53,10 +53,10 @@ videolar:
     kanca: "Önce gözlere bak."
     kanca2: "Bu bir dövme."
     kanca2_alt: "Black & Grey Realizm"
-    acilis: F05            # 0–1,2 sn gözlere yakın → 1,2 sn'de geri çekil → 2,0 sn'ye kadar tut
+    acilis: F05            # 0–0,6 sn 1,8x sabit (gözler) → 0,6–1,2 sn geri çekil → 1,2–2,4 sn "Bu bir dövme."
     kesmeler: [F03, F06, F02]
-    kesme_suresi: 1.2      # 100 BPM'de 2 vuruş
-    kapanis_suresi: 1.5
+    bpm: 100               # müzik BPM'i; kesme = 2 vuruş (120/BPM sn), açılış = 4 vuruş, kapanış = 3 vuruş
+    # 100 BPM → açılış 2,4 sn · kesmeler 2,4 / 3,6 / 4,8 sn · kapanış 6,0 sn'de başlar, 1,8 sn · toplam 7,8 sn
   R2:
     cikti: R2-surecten-sonuca-renkli.mp4
     kaynak: v1-surec-alev-baldir.mov
