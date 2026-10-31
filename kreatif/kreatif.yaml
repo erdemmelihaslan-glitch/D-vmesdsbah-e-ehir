@@ -1,7 +1,8 @@
 # ============================================================
-#  KREATİF ÜRETİM AYARLARI — python3 tools/kreatif_uret.py
-#  Editler sadece kadraj, ışık/kontrast, arka plan temizliği, format ve yazı içerir.
-#  DÖVMENİN KENDİSİ RÖTUŞLANMAZ (yanıltıcı reklam olur).
+#  KREATİF ÜRETİM AYARLARI v2 (kurul tur 1 kararlarıyla)
+#  python3 tools/kreatif_uret.py [--sadece foto|video] [--cozunurluk 4k] [--muzik parca.mp3]
+#  Editler: kadraj, global gamma, arka plan temizliği, format, yazı.
+#  DÖVMENİN KENDİSİ RÖTUŞLANMAZ. Yapay zekâ ile büyütme YOK (detay uydurur → yanıltıcı).
 # ============================================================
 
 marka:
@@ -10,62 +11,62 @@ marka:
   uzmanlik: "Black & Grey Realizm"
   konum: "Bahçeşehir · İstanbul"
   hesap: "@erdemmelih.ink"
+  teklif: "Ücretsiz tasarım görüşmesi"
   cta: "Fikrini WhatsApp'tan yaz"
 
-fotograflar:
-  - dosya: 01-kurukafa-palyaco.jpg
-    kod: F01
-    temizle: [[55, 250, 122, 472]]   # sol kenardaki renkli etiket (x1,y1,x2,y2)
-    reklam: true
-  - dosya: 02-anubis-zeus-kol.jpg
-    kod: F02
-    reklam: true
-  - dosya: 03-palyaco-kadin-onkol.jpg
-    kod: F03
-    reklam: true
-  - dosya: 04-alev-kurukafa-renkli-baldir.jpg
-    kod: F04
-    reklam: true
-  - dosya: 05-yasli-adam-girdap-bacak.jpg
-    kod: F05
-    reklam: true
-  - dosya: 06-kopekbaligi-ahtapot-kol.jpg
-    kod: F06
-    reklam: true
-  - dosya: 07-cadi-bacak.jpg
-    kod: F07
-    kirp: [470, 700, 1430, 1900]     # reklam için dar kadraj: kalça/üst bacak dışarıda (Meta çıplaklık hassasiyeti)
-    reklam: true
+isleme:
+  gamma: 1.2            # orta tonları açar; siyah ve beyaz nokta sabit kalır
+  zemin_parlaklik: 0.30
+  max_buyutme: 1.5      # kaynaktan en fazla 1,5x büyütme (yumuşamayı önler)
+  dovme_orani: 0.60     # kadrajda dövmenin kaplayacağı genişlik oranı
 
-# Hikâye / Reels (9:16) görsellerinin üst yazısı
+# odak: dövmenin merkezi (kaynak piksel) · dovme_gen: dövmenin genişliği (kaynak piksel)
+# faz: 1 = ilk günden · 2 = 6. günden itibaren, ayrı tekli reklam · organik = reklamda yok
+fotograflar:
+  - {dosya: 01-kurukafa-palyaco.jpg, kod: F01, faz: 2, odak: [505, 760], dovme_gen: 650,
+     temizle: [[55, 250, 122, 472]]}
+  - {dosya: 02-anubis-zeus-kol.jpg, kod: F02, faz: 1, odak: [480, 540], dovme_gen: 330}
+  - {dosya: 03-palyaco-kadin-onkol.jpg, kod: F03, faz: 1, odak: [480, 470], dovme_gen: 400}
+  - {dosya: 04-alev-kurukafa-renkli-baldir.jpg, kod: F04, faz: 2, odak: [725, 700], dovme_gen: 510}
+  - {dosya: 05-yasli-adam-girdap-bacak.jpg, kod: F05, faz: 1, odak: [850, 800], dovme_gen: 590, goz: [855, 690]}
+  - {dosya: 06-kopekbaligi-ahtapot-kol.jpg, kod: F06, faz: 1, odak: [1160, 1200], dovme_gen: 990}
+  - {dosya: 07-cadi-bacak.jpg, kod: F07, faz: organik, kirp: [470, 700, 1430, 1900], odak: [480, 600], dovme_gen: 800}
+
+# Hikâye / Reels (9:16) görsel üst yazısı
 hikaye_yazilari:
   F01: "Yarısı kurukafa, yarısı palyaço."
   F02: "Bir kol. İki tanrı."
-  F03: "Fotoğraf değil, dövme."
-  F04: "Renkli realizm de var."
+  F03: "Her çizgi sana göre."
+  F04: "Renkte de aynı ustalık."
   F05: "Bakışlar tende yaşar."
   F06: "Derinlik: siyah ve gri."
   F07: "Bacaktan bir hikâye."
 
 carousel:
-  sira: [F05, F02, F03, F06, F01, F07]
+  sira: [F05, F03, F02, F06]
   kapanis_baslik: "Sıradaki hikâye senin."
   kapanis_alt: "Fikrini yaz, tasarımı birlikte çizelim."
 
 videolar:
-  slayt_realizm:
-    cikti: R1-bu-bir-fotograf-degil.mp4
-    kanca: "BU BİR FOTOĞRAF DEĞİL."
-    kanca_alt: "Black & Grey Realizm"
-    sira: [F05, F03, F02, F06, F01, F07]
-    kare_suresi: 1.8
-  surec_sonuc:
-    cikti: R2-surecten-sonuca-alev.mp4
+  R1:
+    cikti: R1-once-gozlere-bak.mp4
+    kanca: "Önce gözlere bak."
+    kanca2: "Bu bir dövme."
+    kanca2_alt: "Black & Grey Realizm"
+    acilis: F05            # 0–1,2 sn gözlere yakın → 1,2 sn'de geri çekil → 2,0 sn'ye kadar tut
+    kesmeler: [F03, F06, F02]
+    kesme_suresi: 1.2      # 100 BPM'de 2 vuruş
+    kapanis_suresi: 1.5
+  R2:
+    cikti: R2-surecten-sonuca-renkli.mp4
     kaynak: v1-surec-alev-baldir.mov
     kanca: "Bu baldır böyle yapıldı."
     sonuc_foto: F04
     sonuc_yazi: "Sonuç."
+    sonuc_alt: "Renkte de aynı ustalık."
+    sonuc_suresi: 2.5
+    kapanis_suresi: 1.5
   organik_mario:
     cikti: ORGANIK-mario-surec.mp4
     kaynak: v2-surec-mario-onkol.mov
-    not: "Nintendo karakteri — ücretli reklamda KULLANMA, sadece organik paylaşım."
+    not: "Nintendo karakteri: reklamda KULLANMA, asla öne çıkarma (boost). WhatsApp çağrısı yok."

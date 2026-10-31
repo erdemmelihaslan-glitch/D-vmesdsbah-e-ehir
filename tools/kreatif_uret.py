@@ -1,68 +1,74 @@
 #!/usr/bin/env python3
-"""Reklam kreatiflerini üretir (fotoğraf + video).
+"""Reklam kreatiflerini üretir (fotoğraf + video): v2, kurul tur 1 kararlarıyla.
 
-    python3 tools/kreatif_uret.py              # hepsi
+    python3 tools/kreatif_uret.py                       # hepsi, 1080p
     python3 tools/kreatif_uret.py --sadece foto
-    python3 tools/kreatif_uret.py --sadece video
+    python3 tools/kreatif_uret.py --sadece video --muzik parca.mp3   # Meta Ses Koleksiyonu'ndan
+    python3 tools/kreatif_uret.py --cozunurluk 4k       # 4K ana kopyalar → kreatif/cikti_4k/
 
-Girdi : kreatif/kaynak/  (orijinal foto/video)   +  kreatif/kreatif.yaml (yazılar, sıra)
-Çıktı : kreatif/cikti/
-          akis_4x5/    Instagram/Facebook akış (1080x1350)
-          hikaye_9x16/ Story / Reels görseli (1080x1920)
-          carousel/    Kaydırmalı reklam kartları (1080x1350)
-          video/       Reels videoları (1080x1920, H.264, 30 fps)
+Girdi : kreatif/kaynak/ (orijinal foto/video) + kreatif/kreatif.yaml
+Çıktı : kreatif/cikti/{akis_4x5, hikaye_9x16, carousel, video}
 
-Kural: Dövmenin kendisine rötuş yapılmaz. Sadece kadraj, hafif ışık/netlik,
-arka plan temizliği, format ve yazı. (Gerçekte olmayan bir sonucu göstermek yanıltıcı reklamdır.)
-Gereken: Pillow, numpy, PyYAML, ffmpeg.
+Kurallar (kurul kararı):
+- Dövmenin kendisi rötuşlanmaz. Sadece kadraj, global gamma, arka plan temizliği, format, yazı.
+- Yapay zekâ ile büyütme yok. Kaynaktan en fazla 1,5x büyütülür (4K için orijinal dosya gerekir).
+- 9:16'da yazı ve logo yüksekliğin %14–65'i arasında kalır (Reels arayüzü altta ~%35).
 """
 from __future__ import annotations
 
 import argparse
+import shutil
 import subprocess
 from pathlib import Path
 
 import numpy as np
 import yaml
-from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageFont
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 KOK = Path(__file__).resolve().parent.parent
 KAYNAK = KOK / "kreatif" / "kaynak"
 CIKTI = KOK / "kreatif" / "cikti"
 FONT_DIR = Path("/usr/share/fonts/opentype/inter")
 FPS = 30
-KEMIK = (237, 231, 221)   # ana yazı rengi (kemik beyazı)
-GRI = (160, 154, 146)
+KEMIK = (237, 231, 221)
+GRI = (176, 170, 162)
 SIYAH = (6, 6, 7)
+S = 1            # ölçek: 1 = 1080p, 2 = 4K
+M: dict = {}     # marka
+ISL: dict = {}   # işleme ayarları
+UYARILAR: list[str] = []
 
 
-def font(ad: str, boy: int) -> ImageFont.FreeTypeFont:
-    yol = FONT_DIR / ad
+def u(x: float) -> int:
+    return int(round(x * S))
+
+
+def font(ad: str, boy: float) -> ImageFont.FreeTypeFont:
     try:
-        return ImageFont.truetype(str(yol), boy)
+        return ImageFont.truetype(str(FONT_DIR / ad), u(boy))
     except OSError:
-        return ImageFont.truetype("DejaVuSans-Bold.ttf" if "Bold" in ad or "Black" in ad else "DejaVuSans.ttf", boy)
+        return ImageFont.truetype("DejaVuSans-Bold.ttf" if ("Bold" in ad or "Black" in ad) else "DejaVuSans.ttf", u(boy))
 
 
 def tr_buyuk(s: str) -> str:
     return s.replace("i", "İ").replace("ı", "I").upper()
 
 
-# ---------------------------------------------------------------- metin
-def aralikli_genislik(metin, f, aralik):
+# ---------------------------------------------------------------- metin yardımcıları
+def genislik(metin, f, aralik=0):
     return sum(f.getlength(c) for c in metin) + aralik * max(0, len(metin) - 1)
 
 
-def aralikli_yaz(d: ImageDraw.ImageDraw, merkez_x, y, metin, f, renk, aralik=0):
-    x = merkez_x - aralikli_genislik(metin, f, aralik) / 2
+def yaz_orta(d, x, y, metin, f, renk, aralik=0):
+    x = x - genislik(metin, f, aralik) / 2
     for c in metin:
         d.text((x, y), c, font=f, fill=renk)
         x += f.getlength(c) + aralik
 
 
 def satir_bol(metin, f, max_g):
-    kelimeler, satirlar, s = metin.split(), [], ""
-    for k in kelimeler:
+    satirlar, s = [], ""
+    for k in metin.split():
         dene = (s + " " + k).strip()
         if f.getlength(dene) <= max_g:
             s = dene
@@ -73,13 +79,14 @@ def satir_bol(metin, f, max_g):
     return satirlar
 
 
-def golgeli_katman(boyut, ciz):
-    """Metni gölgeli çizer: ciz(draw) fonksiyonu katmana yazar."""
-    katman = Image.new("RGBA", boyut, (0, 0, 0, 0))
-    ciz(ImageDraw.Draw(katman))
-    golge = Image.new("RGBA", boyut, (0, 0, 0, 0))
-    golge.putalpha(katman.getchannel("A").filter(ImageFilter.GaussianBlur(10)).point(lambda a: int(a * 0.85)))
-    return Image.alpha_composite(golge, katman)
+def katman(boyut, ciz, golge=True):
+    k = Image.new("RGBA", boyut, (0, 0, 0, 0))
+    ciz(ImageDraw.Draw(k))
+    if not golge:
+        return k
+    g = Image.new("RGBA", boyut, (0, 0, 0, 0))
+    g.putalpha(k.getchannel("A").filter(ImageFilter.GaussianBlur(u(10))).point(lambda a: int(a * 0.85)))
+    return Image.alpha_composite(g, k)
 
 
 def scrim(boyut, ust: bool, yukseklik, guc=0.85):
@@ -95,46 +102,44 @@ def scrim(boyut, ust: bool, yukseklik, guc=0.85):
     return s
 
 
-# ---------------------------------------------------------------- foto hazırlama
+def ustune(taban: Image.Image, *katmanlar) -> Image.Image:
+    t = taban.convert("RGBA")
+    for k in katmanlar:
+        t = Image.alpha_composite(t, k)
+    return t.convert("RGB")
+
+
+# ---------------------------------------------------------------- fotoğraf işleme
 def foto_yukle(oge: dict) -> Image.Image:
     im = Image.open(KAYNAK / oge["dosya"]).convert("RGB")
     for x1, y1, x2, y2 in oge.get("temizle", []):
-        # Kutuyu çevresindeki arka plan rengiyle doldur, kenarları yumuşat
         a = np.asarray(im).copy()
-        pad = 30
+        p = 30
         cev = np.concatenate([
-            a[max(0, y1 - pad):y1, x1:x2].reshape(-1, 3), a[y2:y2 + pad, x1:x2].reshape(-1, 3),
-            a[y1:y2, max(0, x1 - pad):x1].reshape(-1, 3), a[y1:y2, x2:x2 + pad].reshape(-1, 3)])
+            a[max(0, y1 - p):y1, x1:x2].reshape(-1, 3), a[y2:y2 + p, x1:x2].reshape(-1, 3),
+            a[y1:y2, max(0, x1 - p):x1].reshape(-1, 3), a[y1:y2, x2:x2 + p].reshape(-1, 3)])
         a[y1:y2, x1:x2] = np.median(cev, axis=0).astype(np.uint8)
-        yama = Image.fromarray(a)
         maske = Image.new("L", im.size, 0)
         ImageDraw.Draw(maske).rectangle([x1 - 6, y1 - 6, x2 + 6, y2 + 6], fill=255)
-        im = Image.composite(yama, im, maske.filter(ImageFilter.GaussianBlur(5)))
+        im = Image.composite(Image.fromarray(a), im, maske.filter(ImageFilter.GaussianBlur(5)))
     if oge.get("kirp"):
         im = im.crop(tuple(oge["kirp"]))
-    # Hafif profesyonel bitiş: netlik + çok az kontrast. Dövme detayı DEĞİŞTİRİLMEZ.
-    im = im.filter(ImageFilter.UnsharpMask(radius=1.6, percent=30, threshold=3))
-    im = ImageEnhance.Contrast(im).enhance(1.04)
-    return im
+    g = ISL["gamma"]   # global gamma: siyah (0) ve beyaz (255) sabit, orta tonlar açılır
+    lut = [round(255 * ((i / 255) ** (1 / g))) for i in range(256)]
+    return im.point(lut * 3)
 
 
-def bulanik_zemin(im: Image.Image, boyut) -> Image.Image:
-    """Fotoğrafın kendisinden karartılmış bulanık zemin (siyah zeminli fotoğraflarda neredeyse siyah)."""
+def bulanik_zemin(im, boyut):
     w, h = boyut
     o = max(w / im.width, h / im.height)
     z = im.resize((int(im.width * o) + 2, int(im.height * o) + 2), Image.BICUBIC)
     z = z.crop(((z.width - w) // 2, (z.height - h) // 2, (z.width - w) // 2 + w, (z.height - h) // 2 + h))
-    z = z.filter(ImageFilter.GaussianBlur(45))
-    return ImageEnhance.Brightness(z).enhance(0.22)
+    z = z.filter(ImageFilter.GaussianBlur(u(45)))
+    return Image.eval(z, lambda v: int(v * ISL["zemin_parlaklik"]))
 
 
-def yerlestir(im, kutu_w, kutu_h):
-    o = min(kutu_w / im.width, kutu_h / im.height)
-    return im.resize((round(im.width * o), round(im.height * o)), Image.LANCZOS)
-
-
-def yumusak_yapistir(c: Image.Image, p: Image.Image, x: int, y: int, kenar=70):
-    """Fotoğrafı zemine kenarları yumuşatarak yapıştırır (sert dikdörtgen çizgisi kalmaz)."""
+def yumusak_yapistir(c, p, x, y, kenar=None):
+    kenar = kenar or u(70)
     m = np.ones((p.height, p.width), dtype=np.float32)
     r = np.linspace(0, 1, kenar, dtype=np.float32)
     if y > 0:
@@ -148,85 +153,117 @@ def yumusak_yapistir(c: Image.Image, p: Image.Image, x: int, y: int, kenar=70):
     c.paste(p, (x, y), Image.fromarray((m * 255).astype(np.uint8)))
 
 
-def imza(d, W, y, kucuk=False):
-    f1 = font("InterDisplay-Bold.otf", 30 if kucuk else 36)
-    f2 = font("Inter-Medium.otf", 16 if kucuk else 18)
-    aralikli_yaz(d, W / 2, y, tr_buyuk(M["ust"]), f1, KEMIK, 9)
-    aralikli_yaz(d, W / 2, y + (40 if kucuk else 48), M["alt"], f2, GRI, 8)
-
-
-def akis_4x5(kod, im) -> Image.Image:
-    W, H = 1080, 1350
+def doldur(im, oge, W, H, merkez_y=None):
+    """Dövmeyi kadraja DOLDURUR (dövme genişliğin ~%60'ı). Büyütme ≤ max_buyutme.
+    Döner: (tuval, kaynak→tuval koordinat dönüştürücü)."""
+    cx, cy = oge.get("odak", (im.width / 2, im.height / 2))
+    gen = oge.get("dovme_gen", im.width * 0.6)
+    oran = W / H
+    cap = ISL["max_buyutme"]
+    cw = min(max(gen / ISL["dovme_orani"], W / cap), im.width)
+    ch = cw / oran
+    if ch > im.height:
+        ch = im.height
+        cw = min(im.width, ch * oran)
+    s = min(W / cw, H / ch, cap)
+    if s >= cap - 1e-6 and (cw * s < W - 2 or ch * s < H - 2):
+        UYARILAR.append(f"{oge['kod']}: kaynak çözünürlüğü bu format için yetersiz ({im.width}px) → orijinal dosya gerekli")
+    x0 = min(max(cx - cw / 2, 0), im.width - cw)
+    y0 = min(max(cy - ch / 2, 0), im.height - ch)
+    p = im.crop((round(x0), round(y0), round(x0 + cw), round(y0 + ch))).resize((round(cw * s), round(ch * s)), Image.LANCZOS)
+    if s <= 1.2:
+        p = p.filter(ImageFilter.UnsharpMask(radius=1.2 * S, percent=25, threshold=3))
     c = bulanik_zemin(im, (W, H))
-    p = yerlestir(im, W, H - 150)
-    ust = max(0, (H - 150 - p.height) // 2)
-    yumusak_yapistir(c, p, (W - p.width) // 2, ust)
-    c = c.convert("RGBA")
-    c = Image.alpha_composite(c, scrim((W, H), False, 300))
-    c = Image.alpha_composite(c, golgeli_katman((W, H), lambda d: imza(d, W, H - 112)))
-    return c.convert("RGB")
+    my = merkez_y if merkez_y is not None else H / 2
+    px = (W - p.width) // 2
+    py = int(min(max(my - p.height / 2, 0), H - p.height))
+    yumusak_yapistir(c, p, px, py)
+    return c, (lambda x, y: (px + (x - x0) * s, py + (y - y0) * s))
 
 
-def hikaye_9x16(kod, im, yazi) -> Image.Image:
-    W, H = 1080, 1920
-    c = bulanik_zemin(im, (W, H))
-    p = yerlestir(im, W, 1060)
-    yumusak_yapistir(c, p, (W - p.width) // 2, 460 + (1060 - p.height) // 2)
-    c = c.convert("RGBA")
-    c = Image.alpha_composite(c, scrim((W, H), True, 520, 0.75))
-    c = Image.alpha_composite(c, scrim((W, H), False, 520, 0.8))
+# ---------------------------------------------------------------- tasarım parçaları
+def imza(d, W, y):
+    yaz_orta(d, W / 2, y, tr_buyuk(M["ust"]), font("InterDisplay-Bold.otf", 36), KEMIK, u(9))
+    yaz_orta(d, W / 2, y + u(48), M["alt"], font("Inter-Medium.otf", 24), GRI, u(8))
+
+
+def teklif_etiketi(boyut, y, metin=None):
+    """Yarı saydam koyu zemin üstünde teklif satırı (görselde okunur)."""
+    metin = metin or M["teklif"]
+    f = font("Inter-SemiBold.otf", 40)
+    W = boyut[0]
+    k = Image.new("RGBA", boyut, (0, 0, 0, 0))
+    d = ImageDraw.Draw(k)
+    w = genislik(metin, f) + u(64)
+    d.rounded_rectangle([W / 2 - w / 2, y, W / 2 + w / 2, y + u(76)], radius=u(38), fill=(0, 0, 0, 165))
+    yaz_orta(d, W / 2, y + u(14), metin, f, KEMIK)
+    return k
+
+
+def akis_4x5(im, oge):
+    W, H = u(1080), u(1350)
+    c, _ = doldur(im, oge, W, H)
+    return ustune(c, scrim((W, H), False, u(300)), katman((W, H), lambda d: imza(d, W, H - u(122))))
+
+
+def hikaye_9x16(im, oge, yazi):
+    """Story/Reels görseli. Tüm yazılar y=%14–65 bandında (269–1248 px)."""
+    W, H = u(1080), u(1920)
+    c, _ = doldur(im, oge, W, H, merkez_y=u(860))
 
     def ciz(d):
         f = font("InterDisplay-Bold.otf", 66)
-        for i, s in enumerate(satir_bol(yazi, f, 940)):
-            aralikli_yaz(d, W / 2, 290 + i * 80, s, f, KEMIK, 0)
-        imza(d, W, 1545, kucuk=True)
-    c = Image.alpha_composite(c, golgeli_katman((W, H), ciz))
-    return c.convert("RGB")
+        for i, s in enumerate(satir_bol(yazi, f, u(940))):
+            yaz_orta(d, W / 2, u(300) + i * u(80), s, f, KEMIK)
+        imza(d, W, u(1062))
+    return ustune(c, scrim((W, H), True, u(600), 0.8), katman((W, H), ciz), teklif_etiketi((W, H), u(1160)))
 
 
-def kapanis_karti(W, H, baslik=None, alt=None, uzmanlik=None) -> Image.Image:
+def kapanis_karti(W, H, mod="reklam", baslik=None, alt=None, uzmanlik=None):
+    """mod: 'reklam' (teklif + çağrı) | 'organik' (sadece marka). İçerik y=470–1100 arasında."""
     c = Image.new("RGB", (W, H), SIYAH)
     d = ImageDraw.Draw(c)
-    orta = H / 2 - (60 if H > 1500 else 40)
     if baslik:
-        fb = font("InterDisplay-Bold.otf", 64)
-        satirlar = satir_bol(baslik, fb, W - 160)
-        for i, s in enumerate(satirlar):
-            aralikli_yaz(d, W / 2, orta - 330 + i * 76, s, fb, KEMIK)
+        fb = font("InterDisplay-Bold.otf", 60)
+        sat = satir_bol(baslik, fb, W - u(160))
+        for i, s in enumerate(sat):
+            yaz_orta(d, W / 2, u(220) + i * u(72), s, fb, KEMIK)
         if alt:
-            fa = font("Inter-Regular.otf", 32)
-            for i, s in enumerate(satir_bol(alt, fa, W - 200)):
-                aralikli_yaz(d, W / 2, orta - 330 + len(satirlar) * 76 + 24 + i * 44, s, fa, GRI)
-    d.line([(W / 2 - 40, orta - 70), (W / 2 + 40, orta - 70)], fill=GRI, width=2)
-    aralikli_yaz(d, W / 2, orta - 30, tr_buyuk(M["ust"]), font("InterDisplay-Bold.otf", 84), KEMIK, 14)
-    aralikli_yaz(d, W / 2, orta + 78, M["alt"], font("Inter-Medium.otf", 28), GRI, 14)
-    aralikli_yaz(d, W / 2, orta + 160, uzmanlik or M["uzmanlik"], font("Inter-Regular.otf", 38), KEMIK)
-    # CTA kapsülü
-    fc = font("Inter-SemiBold.otf", 36)
-    cw = fc.getlength(M["cta"]) + 80
-    y = orta + 260
-    d.rounded_rectangle([W / 2 - cw / 2, y, W / 2 + cw / 2, y + 84], radius=42, fill=KEMIK)
-    aralikli_yaz(d, W / 2, y + 20, M["cta"], fc, SIYAH)
-    aralikli_yaz(d, W / 2, y + 130, f"{M['konum']}   ·   {M['hesap']}", font("Inter-Medium.otf", 28), GRI)
+            yaz_orta(d, W / 2, u(220) + len(sat) * u(72) + u(18), alt, font("Inter-Regular.otf", 32), GRI)
+    d.line([(W / 2 - u(40), u(470)), (W / 2 + u(40), u(470))], fill=GRI, width=max(2, u(2)))
+    yaz_orta(d, W / 2, u(500), tr_buyuk(M["ust"]), font("InterDisplay-Bold.otf", 84), KEMIK, u(14))
+    yaz_orta(d, W / 2, u(608), M["alt"], font("Inter-Medium.otf", 28), GRI, u(14))
+    yaz_orta(d, W / 2, u(690), uzmanlik or M["uzmanlik"], font("Inter-Regular.otf", 40), KEMIK)
+    if mod == "reklam":
+        yaz_orta(d, W / 2, u(790), M["teklif"], font("Inter-SemiBold.otf", 40), KEMIK)
+        fc = font("Inter-Medium.otf", 34)
+        cw = genislik(M["cta"], fc) + u(72)
+        d.rounded_rectangle([W / 2 - cw / 2, u(880), W / 2 + cw / 2, u(956)], radius=u(38),
+                            outline=KEMIK, width=max(2, u(2)))   # ince çerçeve (sahte buton değil)
+        yaz_orta(d, W / 2, u(897), M["cta"], fc, KEMIK)
+    yaz_orta(d, W / 2, u(1030), f"{M['konum']}   ·   {M['hesap']}", font("Inter-Medium.otf", 28), GRI)
     return c
 
 
 # ---------------------------------------------------------------- video
 class Yazici:
-    def __init__(self, yol: Path, ses: Path | None = None, ses_sure: float | None = None):
-        komut = ["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", "1080x1920",
-                 "-r", str(FPS), "-i", "-"]
-        if ses:
-            komut += ["-i", str(ses), "-map", "0:v", "-map", "1:a", "-af", "apad"]
+    def __init__(self, yol: Path, sure: float, ses: Path | None = None, muzik: Path | None = None):
+        W, H = u(1080), u(1920)
+        k = ["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}",
+             "-r", str(FPS), "-i", "-"]
+        if muzik:
+            k += ["-i", str(muzik), "-map", "0:v", "-map", "1:a",
+                  "-af", f"afade=t=in:d=0.3,afade=t=out:st={max(0, sure - 0.6):.2f}:d=0.6"]
+        elif ses:
+            k += ["-i", str(ses), "-map", "0:v", "-map", "1:a", "-af", "apad"]
         else:
-            komut += ["-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo", "-map", "0:v", "-map", "1:a"]
-        komut += ["-shortest", "-c:v", "libx264", "-preset", "medium", "-crf", "18", "-pix_fmt", "yuv420p",
-                  "-profile:v", "high", "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", str(yol)]
-        self.p = subprocess.Popen(komut, stdin=subprocess.PIPE)
+            k += ["-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo", "-map", "0:v", "-map", "1:a"]
+        k += ["-t", f"{sure:.3f}", "-c:v", "libx264", "-preset", "medium", "-crf", "18", "-pix_fmt", "yuv420p",
+              "-profile:v", "high", "-c:a", "aac", "-b:a", "160k", "-movflags", "+faststart", str(yol)]
+        self.p = subprocess.Popen(k, stdin=subprocess.PIPE)
         self.n = 0
 
-    def yaz(self, im: Image.Image):
+    def yaz(self, im):
         self.p.stdin.write(im.convert("RGB").tobytes())
         self.n += 1
 
@@ -236,183 +273,169 @@ class Yazici:
             raise SystemExit("ffmpeg hatası")
 
 
-def video_kareleri(yol: Path):
-    """Videoyu 1080x1920 / 30fps kare kare okur (hafif kontrast ve netlik)."""
-    vf = ("fps=30,scale=1080:1920:force_original_aspect_ratio=increase:flags=lanczos,crop=1080:1920,"
-          "eq=contrast=1.04:saturation=1.03,unsharp=5:5:0.4")
+def video_kareleri(yol: Path, n: int):
+    """Kaynak videoyu 9:16 / 30 fps okur. Büyütülmüş kaynakta netleştirme YOK (kurul kararı)."""
+    W, H = u(1080), u(1920)
+    vf = (f"fps=30,scale={W}:{H}:force_original_aspect_ratio=increase:flags=lanczos,crop={W}:{H},"
+          "eq=contrast=1.03")
     p = subprocess.Popen(["ffmpeg", "-v", "error", "-i", str(yol), "-vf", vf, "-f", "rawvideo",
                           "-pix_fmt", "rgb24", "-"], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
-    boy = 1080 * 1920 * 3
+    boy = W * H * 3
     try:
-        while True:
+        for _ in range(n):
             b = p.stdout.read(boy)
             if len(b) < boy:
                 break
-            yield Image.frombytes("RGB", (1080, 1920), b)
+            yield Image.frombytes("RGB", (W, H), b)
     finally:
         p.kill()
         p.wait()
 
 
-def zoom_kareleri(c: Image.Image, n: int, z1=1.0, z2=1.07):
+def yakinlas(c, z, mx, my):
     W, H = c.size
-    for i in range(n):
-        z = z1 + (z2 - z1) * (i / max(1, n - 1))
-        w, h = W / z, H / z
-        x, y = (W - w) / 2, (H - h) / 2
-        yield c.resize((W, H), Image.BICUBIC, box=(x, y, x + w, y + h))
+    w, h = W / z, H / z
+    x = min(max(mx - w / 2, 0), W - w)
+    y = min(max(my - h / 2, 0), H - h)
+    return c.resize((W, H), Image.BICUBIC, box=(x, y, x + w, y + h))
 
 
-def sabit_kareler(c, n):
-    for _ in range(n):
-        yield c
-
-
-def birlestir(yazici: Yazici, parcalar, gecis=12, ustune=None):
-    """parcalar: [(kare_üreteci, kare_sayısı)]; aralarında 'gecis' karelik çapraz geçiş.
-    ustune(i, kare) -> kare : zaman çizelgesindeki i. kareye yazı bindirmek için."""
-    i = 0
-    kuyruk = []                      # önceki parçanın sona saklanan kareleri
-    for pi, (gen, n) in enumerate(parcalar):
-        tut = gecis if pi < len(parcalar) - 1 else 0
-        yeni = []
-        for j, k in enumerate(gen):
-            if j >= n:
-                break
-            if j < len(kuyruk):
-                k = Image.blend(kuyruk[j], k, (j + 1) / (len(kuyruk) + 1))
-            if j >= n - tut:
-                yeni.append(k)
-                continue
-            yazici.yaz(ustune(i, k) if ustune else k)
-            i += 1
-        kuyruk = yeni
-    return i
-
-
-def kanca_bindir(baslangic_metin, alt_metin=None, sure_kare=78, imza_bitis=10**9):
-    W, H = 1080, 1920
-    ust = Image.alpha_composite(Image.new("RGBA", (W, H), (0, 0, 0, 0)), scrim((W, H), True, 620, 0.8))
+def ust_yazi(metin, alt=None, boy=84):
+    W, H = u(1080), u(1920)
 
     def ciz(d):
-        f = font("InterDisplay-Black.otf", 84)
-        satirlar = satir_bol(baslangic_metin, f, 960)
-        for k, s in enumerate(satirlar):
-            aralikli_yaz(d, W / 2, 300 + k * 96, s, f, KEMIK)
-        if alt_metin:
-            aralikli_yaz(d, W / 2, 300 + len(satirlar) * 96 + 18, alt_metin, font("Inter-Medium.otf", 36), GRI, 3)
-    yazi = Image.alpha_composite(ust, golgeli_katman((W, H), ciz))
-    alt = Image.alpha_composite(Image.new("RGBA", (W, H), (0, 0, 0, 0)), scrim((W, H), False, 420, 0.7))
-    alt = Image.alpha_composite(alt, golgeli_katman((W, H), lambda d: imza(d, W, 1545, kucuk=True)))
-
-    def uygula(i, k):
-        k = k.convert("RGBA")
-        if i < imza_bitis:
-            k = Image.alpha_composite(k, alt)
-        if i < sure_kare:
-            a = 1.0 if i < sure_kare - 8 else (sure_kare - i) / 8
-            katman = yazi.copy()
-            katman.putalpha(yazi.getchannel("A").point(lambda v: int(v * a)))
-            k = Image.alpha_composite(k, katman)
-        return k.convert("RGB")
-    return uygula
+        f = font("InterDisplay-Black.otf", boy)
+        sat = satir_bol(metin, f, u(960))
+        for i, s in enumerate(sat):
+            yaz_orta(d, W / 2, u(300) + i * u(boy + 12), s, f, KEMIK)
+        if alt:
+            yaz_orta(d, W / 2, u(300) + len(sat) * u(boy + 12) + u(16), alt, font("Inter-SemiBold.otf", 44), KEMIK, u(2))
+    return Image.alpha_composite(scrim((W, H), True, u(640), 0.8), katman((W, H), ciz))
 
 
-def video_sayisi(yol):
+def video_sure(yol):
     out = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(yol)],
                          capture_output=True, text=True).stdout
-    return int(float(out) * FPS)
+    return float(out)
+
+
+def r1_uret(V, fotolar, ogeler, muzik):
+    W, H = u(1080), u(1920)
+    n_ac, n_cek, n_kes, n_kap = 60, 36, int(V["kesme_suresi"] * FPS), int(V["kapanis_suresi"] * FPS)
+    toplam = n_ac + n_kes * len(V["kesmeler"]) + n_kap
+    y = Yazici(CIKTI / "video" / V["cikti"], toplam / FPS, muzik=muzik)
+    acilis = ogeler[V["acilis"]]
+    c, harita = doldur(fotolar[V["acilis"]], acilis, W, H, merkez_y=u(860))
+    gx, gy = harita(*acilis.get("goz", acilis["odak"]))
+    k1, k2 = ust_yazi(V["kanca"]), ust_yazi(V["kanca2"], V.get("kanca2_alt"))
+    for i in range(n_ac):                       # 0–1,2 sn: gözlerden geri çekil · 1,2–2,0 sn: tut
+        if i < n_cek:
+            e = 1 - (1 - i / (n_cek - 1)) ** 3
+            kare = yakinlas(c, 1.8 + (1.0 - 1.8) * e, gx + (W / 2 - gx) * e, gy + (H / 2 - gy) * e)
+            y.yaz(ustune(kare, k1))
+        else:
+            y.yaz(ustune(c, k2))
+    for kod in V["kesmeler"]:                    # sert kesmeler, vuruşa oturur
+        ck, _ = doldur(fotolar[kod], ogeler[kod], W, H, merkez_y=u(860))
+        for i in range(n_kes):
+            y.yaz(yakinlas(ck, 1.0 + 0.04 * i / max(1, n_kes - 1), W / 2, H / 2))
+    kap = kapanis_karti(W, H)
+    for _ in range(n_kap):
+        y.yaz(kap)
+    y.kapat()
+    return y.n
+
+
+def r2_uret(V, fotolar, ogeler, muzik):
+    W, H = u(1080), u(1920)
+    kay = KAYNAK / V["kaynak"]
+    n_vid = int(video_sure(kay) * FPS) - 2
+    n_son, n_kap = int(V["sonuc_suresi"] * FPS), int(V["kapanis_suresi"] * FPS)
+    y = Yazici(CIKTI / "video" / V["cikti"], (n_vid + n_son + n_kap) / FPS, muzik=muzik)
+    k1 = ust_yazi(V["kanca"])
+    kare = None
+    for i, kare in enumerate(video_kareleri(kay, n_vid)):
+        y.yaz(ustune(kare, k1) if i < 78 else kare)
+    while y.n < n_vid:  # kaynak kısa kalırsa son kareyi tut
+        y.yaz(kare)
+    c, _ = doldur(fotolar[V["sonuc_foto"]], ogeler[V["sonuc_foto"]], W, H, merkez_y=u(880))
+    k2 = ust_yazi(V["sonuc_yazi"], V.get("sonuc_alt"))
+    for i in range(n_son):
+        y.yaz(ustune(yakinlas(c, 1.0 + 0.05 * i / (n_son - 1), W / 2, u(880)), k2))
+    kap = kapanis_karti(W, H, uzmanlik="Realizm dövme")
+    for _ in range(n_kap):
+        y.yaz(kap)
+    y.kapat()
+    return y.n
+
+
+def organik_uret(V):
+    W, H = u(1080), u(1920)
+    kay = KAYNAK / V["kaynak"]
+    n_vid = int(video_sure(kay) * FPS) - 2
+    n_kap = 60
+    y = Yazici(CIKTI / "video" / V["cikti"], (n_vid + n_kap) / FPS, ses=kay)
+    kare = None
+    for kare in video_kareleri(kay, n_vid):
+        y.yaz(kare)
+    while y.n < n_vid:
+        y.yaz(kare)
+    kap = kapanis_karti(W, H, mod="organik")
+    for _ in range(n_kap):
+        y.yaz(kap)
+    y.kapat()
+    return y.n
 
 
 # ---------------------------------------------------------------- ana akış
 def main():
-    global M
+    global S, CIKTI, M, ISL
     ap = argparse.ArgumentParser()
     ap.add_argument("--sadece", choices=["foto", "video"])
+    ap.add_argument("--cozunurluk", choices=["1080", "4k"], default="1080")
+    ap.add_argument("--muzik", type=Path, help="Meta Ses Koleksiyonu'ndan indirilen parça (mp3/wav)")
     a = ap.parse_args()
+    if a.cozunurluk == "4k":
+        S, CIKTI = 2, KOK / "kreatif" / "cikti_4k"
     K = yaml.safe_load((KOK / "kreatif" / "kreatif.yaml").read_text(encoding="utf-8"))
-    M = K["marka"]
-    fotolar = {o["kod"]: foto_yukle(o) for o in K["fotograflar"] if o.get("reklam", True)}
-    for alt in ("akis_4x5", "hikaye_9x16", "carousel", "video"):
-        (CIKTI / alt).mkdir(parents=True, exist_ok=True)
+    M, ISL = K["marka"], K["isleme"]
+    ogeler = {o["kod"]: o for o in K["fotograflar"]}
+    fotolar = {k: foto_yukle(o) for k, o in ogeler.items()}
 
     if a.sadece in (None, "foto"):
+        for alt in ("akis_4x5", "hikaye_9x16", "carousel"):
+            shutil.rmtree(CIKTI / alt, ignore_errors=True)
+            (CIKTI / alt).mkdir(parents=True)
         for kod, im in fotolar.items():
-            akis_4x5(kod, im).save(CIKTI / "akis_4x5" / f"{kod}.jpg", quality=92, subsampling=0)
-            hikaye_9x16(kod, im, K["hikaye_yazilari"][kod]).save(CIKTI / "hikaye_9x16" / f"{kod}.jpg", quality=92, subsampling=0)
+            akis_4x5(im, ogeler[kod]).save(CIKTI / "akis_4x5" / f"{kod}.jpg", quality=93, subsampling=0)
+            hikaye_9x16(im, ogeler[kod], K["hikaye_yazilari"][kod]).save(
+                CIKTI / "hikaye_9x16" / f"{kod}.jpg", quality=93, subsampling=0)
         car = K["carousel"]
         for i, kod in enumerate(car["sira"], 1):
-            akis_4x5(kod, fotolar[kod]).save(CIKTI / "carousel" / f"kart{i:02d}-{kod}.jpg", quality=92, subsampling=0)
-        kapanis_karti(1080, 1350, car["kapanis_baslik"], car["kapanis_alt"]).save(
-            CIKTI / "carousel" / f"kart{len(car['sira']) + 1:02d}-kapanis.jpg", quality=92, subsampling=0)
-        print(f"✔ {len(fotolar)} fotoğraf → akış 4:5, hikâye 9:16, carousel {len(car['sira']) + 1} kart")
+            akis_4x5(fotolar[kod], ogeler[kod]).save(CIKTI / "carousel" / f"kart{i:02d}-{kod}.jpg", quality=93, subsampling=0)
+        kapanis_karti(u(1080), u(1350), "reklam", car["kapanis_baslik"], car["kapanis_alt"]).save(
+            CIKTI / "carousel" / f"kart{len(car['sira']) + 1:02d}-kapanis.jpg", quality=93, subsampling=0)
+        print(f"✔ {len(fotolar)} fotoğraf → akış 4:5 + hikâye 9:16 · carousel {len(car['sira']) + 1} kart")
 
     if a.sadece in (None, "video"):
+        shutil.rmtree(CIKTI / "video", ignore_errors=True)
+        (CIKTI / "video").mkdir(parents=True)
         V = K["videolar"]
-        hikaye = lambda kod: hikaye_zemini(fotolar[kod])  # noqa: E731
-
-        # R1 — slayt: "Bu bir fotoğraf değil"
-        s = V["slayt_realizm"]
-        n = int(s["kare_suresi"] * FPS)
-        parcalar = [(zoom_kareleri(hikaye(k), n + 12), n + 12) for k in s["sira"]]
-        parcalar.append((sabit_kareler(kapanis_karti(1080, 1920), 80), 80))
-        y = Yazici(CIKTI / "video" / s["cikti"])
-        bitis = len(s["sira"]) * (n + 12 - 12)
-        birlestir(y, parcalar, ustune=kanca_bindir(s["kanca"], s.get("kanca_alt"), 72, bitis))
-        y.kapat()
-        print(f"✔ {s['cikti']}  ({y.n / FPS:.1f} sn)")
-
-        # R2 — süreç → sonuç
-        s = V["surec_sonuc"]
-        kay = KAYNAK / s["kaynak"]
-        nv = video_sayisi(kay)
-        sonuc = hikaye(s["sonuc_foto"])
-        ds = ImageDraw.Draw(sonuc)
-        aralikli_yaz(ds, 540, 300, s["sonuc_yazi"], font("InterDisplay-Black.otf", 84), KEMIK)
-        parcalar = [(video_kareleri(kay), nv - 2), (zoom_kareleri(sonuc, 96), 96),
-                    (sabit_kareler(kapanis_karti(1080, 1920, uzmanlik="Realizm dövme"), 80), 80)]
-        y = Yazici(CIKTI / "video" / s["cikti"])
-        bitis = (nv - 2 - 12) + (96 - 12)
-        birlestir(y, parcalar, ustune=kanca_bindir(s["kanca"], None, 78, bitis))
-        y.kapat()
-        print(f"✔ {s['cikti']}  ({y.n / FPS:.1f} sn)")
-
-        # Organik — Mario (ücretli reklamda kullanılmaz)
-        s = V["organik_mario"]
-        kay = KAYNAK / s["kaynak"]
-        nv = video_sayisi(kay)
-        alt = imza_katmani()
-        parcalar = [(video_kareleri(kay), nv - 2),
-                    (sabit_kareler(kapanis_karti(1080, 1920), 75), 75)]
-        y = Yazici(CIKTI / "video" / s["cikti"], ses=kay)
-        birlestir(y, parcalar, ustune=lambda i, k: Image.alpha_composite(k.convert("RGBA"), alt).convert("RGB")
-                  if i < nv - 14 else k)
-        y.kapat()
-        print(f"✔ {s['cikti']}  ({y.n / FPS:.1f} sn)  ← SADECE ORGANİK")
-
-        # Kapak görselleri (video küçük resmi)
-        for ad in (V["slayt_realizm"]["cikti"], V["surec_sonuc"]["cikti"]):
-            subprocess.run(["ffmpeg", "-v", "error", "-y", "-ss", "0.8", "-i", str(CIKTI / "video" / ad),
+        for ad, fn in (("R1", lambda: r1_uret(V["R1"], fotolar, ogeler, a.muzik)),
+                       ("R2", lambda: r2_uret(V["R2"], fotolar, ogeler, a.muzik)),
+                       ("organik_mario", lambda: organik_uret(V["organik_mario"]))):
+            n = fn()
+            print(f"✔ {V[ad]['cikti']}  ({n / FPS:.1f} sn){'  ← SADECE ORGANİK' if 'organik' in ad else ''}")
+        for ad in (V["R1"]["cikti"], V["R2"]["cikti"]):
+            subprocess.run(["ffmpeg", "-v", "error", "-y", "-ss", "0.5", "-i", str(CIKTI / "video" / ad),
                             "-frames:v", "1", "-q:v", "2", str(CIKTI / "video" / ad.replace(".mp4", "-kapak.jpg"))],
                            check=True)
+        if not a.muzik:
+            print("ℹ Videolar sessiz kanal ile üretildi. Yayından önce: --muzik <Meta Ses Koleksiyonu parçası>")
 
+    for w in dict.fromkeys(UYARILAR):
+        print("⚠", w)
 
-def hikaye_zemini(im):
-    """Video için 9:16 zemin + fotoğraf (yazısız; yazı videoda bindirilir)."""
-    W, H = 1080, 1920
-    c = bulanik_zemin(im, (W, H))
-    p = yerlestir(im, W, 1180)
-    yumusak_yapistir(c, p, (W - p.width) // 2, 440 + (1180 - p.height) // 2)
-    return c
-
-
-def imza_katmani():
-    W, H = 1080, 1920
-    alt = Image.alpha_composite(Image.new("RGBA", (W, H), (0, 0, 0, 0)), scrim((W, H), False, 420, 0.6))
-    return Image.alpha_composite(alt, golgeli_katman((W, H), lambda d: imza(d, W, 1545, kucuk=True)))
-
-
-M: dict = {}
 
 if __name__ == "__main__":
     main()

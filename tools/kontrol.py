@@ -34,7 +34,9 @@ RISKLI = {
     "rezil": "Görünüş hakkında olumsuz ifade (Meta politikası)",
     "bedava": "Ücretsiz dövme izlenimi — düşük kaliteli talep çeker",
     "indirim son gün": "Sahte aciliyet riski — sadece gerçekse kullan",
+    "steril ortam": "Kurul kararı: 'steril ortam' yerine 'sterilize ekipman' (kanıtlanabilir ifade)",
 }
+ROTUS_KOSULSUZ = False  # main(): rotus_suresi_ay belli değilse 'rötuş' ifadesi hata
 
 hatalar: list[str] = []
 uyarilar: list[str] = []
@@ -57,6 +59,8 @@ _FIYAT = re.compile(r"\d[\d.]*\s*(tl|₺)|₺\s*\d|_baslangic|kapora\}", re.I)
 
 
 def riskli_tara(yer: str, metin: str):
+    if ROTUS_KOSULSUZ and "rötuş" in tr_kucuk(metin or ""):
+        hata(f"{yer}: 'rötuş' geçiyor ama studio.yaml > reklam.rotus_suresi_ay boş (şartsız 'ücretsiz' iddiası)")
     if FIYAT_YASAK and _FIYAT.search(metin or ""):
         hata(f"{yer}: fiyat geçiyor ama studio.yaml > reklam.fiyat_goster=false → '{metin.strip()[:60]}'")
     kucuk = tr_kucuk(metin)
@@ -149,9 +153,10 @@ def google_kontrol(cfg, d):
 
 
 def main():
-    global FIYAT_YASAK
+    global FIYAT_YASAK, ROTUS_KOSULSUZ
     cfg = ayarlar()
     FIYAT_YASAK = not cfg.get("reklam", {}).get("fiyat_goster", True)
+    ROTUS_KOSULSUZ = cfg.get("reklam", {}).get("rotus_suresi_ay") in (None, "", 0)
     d = degiskenler(cfg)
     config_kontrol(cfg)
     n_meta = meta_kontrol(cfg, d)

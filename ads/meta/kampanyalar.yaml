@@ -1,215 +1,181 @@
 # ============================================================
-#  META (Instagram + Facebook) KAMPANYA YAPISI
-#  {suslu_parantez} içindeki alanlar config/studio.yaml'dan doldurulur.
-#  gerekli_stil: o stil studio.yaml'da false ise reklam otomatik atlanır.
-#  sezon: sadece o dönemde aç (bkz. docs/06-icerik-takvimi.md)
-#  Kontrol:  python3 tools/kontrol.py
+#  META KAMPANYA YAPISI v2: Erdem Melih Tattoo Studio (kurul tur 1 kararlarıyla)
+#  {alan} yerleri config/studio.yaml'dan doldurulur. Kontrol: python3 tools/kontrol.py
+#  faz: 1 = ilk günden · 2 = 6. günden itibaren (ret riski düşük görüldükten sonra) · bekliyor = malzeme gelince
+#  Kod hazır mesajın SONUNA "(R1)" şeklinde eklenir; hızlı soruların sonuna da eklenir.
 # ============================================================
 
 ortak:
-  yerlesimler: ["instagram", "facebook"]
-  instagram_yerlesimleri: ["stream", "story", "reels", "explore"]
   sabit_kurallar:
-    - "Yaş alt sınırı 18 — Advantage+ kitlede de 'yaş alt sınırı' kontrolü 18'de kalmalı"
-    - "Konum: stüdyonun etrafında yarıçap (studio.yaml > hedefleme.yaricap_km)"
-    - "Konum seçeneği: 'Bu konumda yaşayan veya yakın zamanda bulunan kişiler'"
-    - "Reklamlarda 'en iyi', 'bir numara', 'garantili', 'acısız' gibi kanıtlanamayan iddialar YOK"
-    - "Görünüş hakkında olumsuz ifade YOK ('çirkin dövmenden utanıyor musun' gibi)"
+    - "Kesin minimum yaş 21 (Advantage+ kitle kontrolü). 18 altı ASLA."
+    - "Konum: Güvercin Sk. pini, 18 km yarıçap, 'yaşayan veya yakın zamanda bulunan'"
+    - "Advantage+ KREATİF iyileştirmelerinin HEPSİ KAPALI (genişletme, rötuş, animasyon, müzik, metin). Ekran görüntüsü kurul/ klasörüne."
+    - "Audience Network KAPALI"
+    - "Fiyat YOK · 'en iyi / garanti / acısız' YOK · 'steril ortam' değil 'sterilize ekipman'"
+    - "Ücretsiz rötuş, süre ve şart belli olana kadar metinde YOK"
+    - "Reddedilen reklam aynen yeniden yüklenmez; bir kez inceleme istenir"
+  guven_satiri: "Tek kullanımlık iğne · sterilize ekipman · iyileşme takibi."
+  hizli_sorular:   # her reklamda; sonuna o reklamın kodu eklenir
+    - "Kol/bacak projem ya da yarım kalan bir dövmem var"
+    - "Portre dövme yaptırmak istiyorum"
+    - "Fiyat ve seans süresini öğrenmek istiyorum"
+    - "Fikrim var, ücretsiz tasarım görüşmesi istiyorum"
 
 kampanyalar:
 
-  # ----------------------------------------------------------
-  - kod: K1
-    ad: "K1 | Keşif | Reels | ThruPlay"
-    amac: OUTCOME_ENGAGEMENT
-    optimizasyon: THRUPLAY
-    hedef_yeri: ON_VIDEO
-    butce_anahtari: meta_kesif_reels
-    neden: >
-      Yeni insanlara işini gösterir ve ucuza 'video izleyen' kitlesi biriktirir.
-      K3 (yeniden hedefleme) bu havuzdan beslenir. Satış beklenmez.
-    reklam_setleri:
-      - kod: K1-A
-        ad: "K1-A | 18+ | Yarıçap | Advantage+ kitle"
-        kitle: genis
-        reklamlar:
-          - kod: K1-01
-            format: reels
-            kreatif: "Süreç videosu 15–25 sn: çizim → şablon → ilk çizgi → son hal. Müzik hızlı, son karede bitmiş dövme 2 sn durur."
-            ekran_yazisi: "Bu dövme 3 saatte böyle oluştu"
-            metin: |
-              Fikirden tene: çizim, şablon, ilk çizgi ve son hal.
-              Her tasarım sana özel çiziliyor — katalogdan kopya yok.
-              📍 Bahçeşehir · {studyo_adi}
-            baslik: "Sana özel tasarım dövme"
-            cta: LEARN_MORE
-
-          - kod: K1-02
-            format: reels
-            kreatif: "Aynı dövmenin taze hali ve 4–6 hafta sonraki iyileşmiş hali yan yana. Müşteri izniyle."
-            ekran_yazisi: "Taze vs. 1 ay sonra"
-            metin: |
-              Dövmenin asıl sınavı iyileştikten sonra başlar.
-              Çizgiler yerinde, gölgeler temiz. İyileşme takibini biz yapıyoruz.
-              📍 Bahçeşehir · {studyo_adi}
-            baslik: "İyileşmiş hali de güzel olsun"
-            cta: LEARN_MORE
-
-          - kod: K1-03
-            format: reels
-            kreatif: "{sanatci} kameraya konuşuyor (20–30 sn): kim olduğu, neyi sevdiği, stüdyodan kısa görüntü. Altyazı şart."
-            ekran_yazisi: "Dövmeni kim yapacak?"
-            metin: |
-              Merhaba, ben {sanatci}. Bahçeşehir'de, sana özel tasarımlarla çalışıyorum.
-              Dövmeden önce tanışalım: fikrini anlat, birlikte çizelim.
-            baslik: "Sanatçıyla tanış"
-            cta: LEARN_MORE
-
-          - kod: K1-04
-            format: reels
-            sezon: "kasim-subat"
-            kreatif: "Kısa bilgi videosu: güneş, deniz, havuz ikonu üstü çizili → 'kış = rahat iyileşme'. Son karede yeni bir iş."
-            ekran_yazisi: "Dövme için ideal mevsim: KIŞ"
-            metin: |
-              Güneş yok, deniz yok, havuz yok — dövmen rahat iyileşir.
-              Kışın yaptır, yaz geldiğinde tamamen oturmuş olsun. ☀️
-              📍 Bahçeşehir · {studyo_adi}
-            baslik: "Kış: dövmenin sezonu"
-            cta: LEARN_MORE
-
-  # ----------------------------------------------------------
-  - kod: K2
-    ad: "K2 | Mesaj | WhatsApp | Sohbet"
+  - kod: A
+    ad: "EM | Mesaj | WhatsApp | Realizm"
     amac: OUTCOME_ENGAGEMENT
     optimizasyon: CONVERSATIONS
-    hedef_yeri: WHATSAPP          # IG DM tercih edersen: INSTAGRAM_DIRECT
+    hedef_yeri: WHATSAPP
     butce_anahtari: meta_mesaj
     neden: >
-      Ana müşteri kaynağı. Reklama tıklayan kişi doğrudan WhatsApp'ta sana yazar.
-      Karşılama mesajındaki kampanya kodu sayesinde hangi reklamdan geldiği belli olur.
+      Tek kampanya, tek set: 313 TL/gün (10.000 TL/ay, %5 ücret dahil). Bütçeyi bölmek öğrenmeyi öldürür.
+      Sohbet başı ≤ 44 TL olursa haftada 50 sohbetle öğrenme tamamlanır; değilse "öğrenme sınırlı" kabul edilir.
     reklam_setleri:
-      - kod: K2-A
-        ad: "K2-A | 18+ | Yarıçap | Advantage+ kitle"
+      - kod: A1
+        ad: "A1 | Adv+ | 21+ | 18km | Dövme sinyali"
         kitle: genis
+        kitle_onerileri:
+          yas: "24–44"
+          ozel_kitleler: ["Instagram etkileşimi 365 gün", "Video izleme %50, 30 gün (oluşunca)"]
+          ilgiler_max6: ["Dövmeler (Tattoos)", "Vücut sanatı (Body art)", "Ink Master", "Inked (dergi)", "Miami Ink", "Dövme sanatçısı (varsa)"]
+          not: "Kurulum günü Ads Manager'da bulunmayan ilgi alanı eklenmez. Lüks ilgileri KASITLI olarak yok (bkz. plan-v2)."
+        haric: ["Instagram'dan son 30 günde mesaj gönderenler"]
         reklamlar:
-          - kod: K2-01
-            format: carousel
-            kreatif: "En iyi 6–8 işin, her kart tek dövme, kare/dikey. İlk kart en dikkat çekeni."
+          - kod: R1
+            faz: 1
+            format: reels
+            kreatif: "kreatif/cikti/video/R1-once-gozlere-bak.mp4 (+ Meta Ses Koleksiyonu müziği gömülü)"
+            ekran_yazisi: "Önce gözlere bak. → Bu bir dövme."
             metin: |
-              Aklındaki dövmeyi bize yaz, birlikte tasarlayalım. ✍️
-              ✔️ Sana özel çizim
-              ✔️ Tek kullanımlık iğne, steril ortam
-              ✔️ İyileşme takibi ve ücretsiz rötuş
-              📍 Bahçeşehir · Randevulu çalışıyoruz
+              Önce gözlere bak: bu bir dövme. 🖤
+              Tek kullanımlık iğne · sterilize ekipman · iyileşme takibi.
+              Black & grey realizm, Bahçeşehir'de. Her tasarım sana özel çiziliyor; ücretsiz tasarım görüşmesiyle başlıyoruz.
+              Fiyat boyuta ve detaya göre değişir; görüşmede net bilgi veriyoruz.
+              📍 Bahçeşehir · {studyo_adi}
+            baslik: "Realizm projeni konuşalım"
+            cta: WHATSAPP_MESSAGE
+            karsilama: "Merhaba! Realizm dövme projem için görüşmek istiyorum."
+
+          - kod: C1
+            faz: 1
+            format: carousel
+            kreatif: "kreatif/cikti/carousel/kart01…05 (F05, F03, F02, F06, kapanış)"
+            kart_basliklari: ["Bakışlar tende yaşar", "Her çizgi sana göre", "Bir kol. İki tanrı.", "Derinlik: siyah ve gri", "Sıradaki hikâye senin"]
+            metin: |
+              Kol, bacak, ön kol: tende hikâye anlatan black & grey realizm.
+              Tek kullanımlık iğne · sterilize ekipman · iyileşme takibi.
+              Tüm işler {sanatci}'ın kendi çalışması. Fikrini yaz, ücretsiz tasarım görüşmesinde birlikte çizelim.
+              📍 Bahçeşehir · {studyo_adi}
+            baslik: "Sıradaki hikâye senin"
+            cta: WHATSAPP_MESSAGE
+            karsilama: "Merhaba! İşlerinizi gördüm, dövme projem için görüşmek istiyorum."
+
+          - kod: F3
+            faz: 1
+            format: tekli_gorsel
+            kreatif: "akis_4x5/F03.jpg + hikaye_9x16/F03.jpg"
+            metin: |
+              Her çizgi sana göre tasarlanır.
+              Tek kullanımlık iğne · sterilize ekipman · iyileşme takibi.
+              Fikrin henüz net değilse sorun değil: bir fotoğraf, bir anı ya da bir kelime yeter. Ücretsiz tasarım görüşmesinde birlikte netleştiriyoruz.
+              📍 Bahçeşehir · {studyo_adi}
             baslik: "Fikrini yaz, birlikte çizelim"
             cta: WHATSAPP_MESSAGE
-            karsilama: "Merhaba! Dövme fikrimi paylaşmak istiyorum."
+            karsilama: "Merhaba! Bir dövme fikrim var, tasarım görüşmesi istiyorum."
 
-          - kod: K2-02
-            format: reels
-            gerekli_stil: minimal_fine_line
-            kreatif: "3–4 minimal dövme hızlı geçiş + ekranda fiyat yazısı. Son kare: 'Fiyat için yaz'."
-            ekran_yazisi: "Minimal dövme {minimal_baslangic} TL'den"
-            metin: |
-              İlk dövmen mi? Küçük başla, doğru başla.
-              Yazı, tarih, sembol, fine line… Yerini ve boyutunu birlikte seçelim,
-              net fiyatı mesajda söyleyelim.
-              Minimal dövmeler {minimal_baslangic} TL'den başlar; fiyat boyut ve detaya göre değişir.
-            baslik: "Minimal dövme {minimal_baslangic} TL'den"
-            cta: WHATSAPP_MESSAGE
-            karsilama: "Merhaba! Minimal dövme için fiyat almak istiyorum."
-
-          - kod: K2-03
-            format: reels
-            gerekli_stil: dovme_kapatma_cover_up
-            kreatif: "Kapatma süreci: eski dövme (bulanık değil, net) → tasarım üzerine çizim → yeni hal. NOT: Meta öncesi/sonrası görselleri bazen işaretliyor; reddedilirse sadece 'yeni hali' kullan."
-            ekran_yazisi: "Eski dövmen yeni bir hikâyeye dönüşebilir"
-            metin: |
-              Eski bir dövmen mi var? Üstüne yeni bir hikâye yazabiliriz.
-              Fotoğrafını WhatsApp'tan gönder, neler yapılabileceğini ücretsiz değerlendirelim.
-              📍 Bahçeşehir · {studyo_adi}
-            baslik: "Kapatma için ücretsiz değerlendirme"
-            cta: WHATSAPP_MESSAGE
-            karsilama: "Merhaba! Eski dövmemi kapatmak istiyorum, fotoğraf göndereceğim."
-
-          - kod: K2-04
-            format: reels
-            sezon: "etkinlik"
-            kreatif: "Flash tasarımların olduğu sayfa + stüdyo hazırlığı. Tarih ve kontenjan ekranda net yazsın."
-            ekran_yazisi: "FLASH GÜNÜ · Hazır tasarımlar sabit fiyatla"
-            metin: |
-              Flash Günü geliyor! ⚡
-              Hazır tasarımlar sabit fiyatla, kontenjan sınırlı.
-              Tarih ve tasarımlar için yaz, yerini ayıralım.
-            baslik: "Flash Günü — yerini ayır"
-            cta: WHATSAPP_MESSAGE
-            karsilama: "Merhaba! Flash Günü için yer ayırtmak istiyorum."
-            not: "Sadece GERÇEK bir flash etkinliği varken aç. Tarihi metne ekle."
-
-          - kod: K2-05
+          - kod: F5
+            faz: 1
             format: tekli_gorsel
-            sezon: "aralik-subat"
-            kreatif: "Şık bir hediye kartı tasarımı (fiziksel kart + zarf fotoğrafı)."
+            kreatif: "akis_4x5/F05.jpg + hikaye_9x16/F05.jpg"
             metin: |
-              Ona unutamayacağı bir hediye: {studyo_adi} hediye kartı. 🎁
-              Tutarı sen seç, tasarımı birlikte yapalım.
-              Yılbaşı ve Sevgililer Günü için WhatsApp'tan sipariş ver.
-            baslik: "Hediye dövme kartı"
+              Bakışlar tende yaşar.
+              Tek kullanımlık iğne · sterilize ekipman · iyileşme takibi.
+              Yüzler, karakterler, büyük projeler: black & grey realizm. Yarım kalmış bir kol ya da bacak projen varsa onu da birlikte planlıyoruz.
+              📍 Bahçeşehir · {studyo_adi}
+            baslik: "Kol ya da bacak projeni planlayalım"
             cta: WHATSAPP_MESSAGE
-            karsilama: "Merhaba! Hediye kartı almak istiyorum."
+            karsilama: "Merhaba! Kol/bacak projem için görüşmek istiyorum."
 
-          - kod: K2-06
+          - kod: V1
+            faz: bekliyor
             format: reels
-            sezon: "subat"
-            kreatif: "Çift dövmeleri (eşleşen iki parça) — iki eli/kolu yan yana gösteren çekimler."
-            ekran_yazisi: "İkinize özel, eşleşen dövmeler"
+            kreatif: "Erdem Melih konuşma videosu (docs/12 → Video A). ÇEKİLİNCE kurgulanacak. YAYIN ÖN ŞARTI."
+            ekran_yazisi: "DÖVMENİ YAPMADAN ÖNCE TANIŞALIM"
             metin: |
-              Sevgililer Günü için ikinize özel, birbirini tamamlayan tasarımlar. 💞
-              Fikrinizi yazın, birlikte çizelim.
-            baslik: "Çift dövmesi tasarlayalım"
+              Dövmeni yapmadan önce tanışalım.
+              Tek kullanımlık iğne · sterilize ekipman · iyileşme takibi.
+              Ben {sanatci}. Black & grey realizm çalışıyorum; her tasarımı sana özel çiziyorum. Ücretsiz tasarım görüşmesi için yaz.
+              📍 Bahçeşehir
+            baslik: "Erdem Melih ile tanış"
             cta: WHATSAPP_MESSAGE
-            karsilama: "Merhaba! Çift dövmesi için bilgi almak istiyoruz."
+            karsilama: "Merhaba Erdem! Dövme projem için görüşmek istiyorum."
 
-  # ----------------------------------------------------------
-  - kod: K3
-    ad: "K3 | Yeniden Hedefleme | Sıcak kitle | Mesaj"
+          # ---- FAZ 2 (6. günden itibaren, ret yoksa) ayrı tekli reklamlar ----
+          - kod: R2
+            faz: 2
+            format: reels
+            kreatif: "kreatif/cikti/video/R2-surecten-sonuca-renkli.mp4"
+            ekran_yazisi: "Bu baldır böyle yapıldı. → Sonuç. Renkte de aynı ustalık."
+            metin: |
+              Bu baldır böyle yapıldı. 🔥
+              Tek kullanımlık iğne · sterilize ekipman · iyileşme takibi.
+              Black & grey'de olduğu gibi renkte de: sana özel tasarım, ücretsiz tasarım görüşmesi.
+              📍 Bahçeşehir · {studyo_adi}
+            baslik: "Fikrini yaz, birlikte çizelim"
+            cta: WHATSAPP_MESSAGE
+            karsilama: "Merhaba! Renkli realizm dövme için görüşmek istiyorum."
+
+          - kod: F1
+            faz: 2
+            format: tekli_gorsel
+            kreatif: "akis_4x5/F01.jpg + hikaye_9x16/F01.jpg"
+            metin: |
+              Yarısı kurukafa, yarısı palyaço.
+              Tek kullanımlık iğne · sterilize ekipman · iyileşme takibi.
+              Karanlık temalar, karakter realizmi: fikrini yaz, kompozisyonu birlikte kuralım.
+              📍 Bahçeşehir · {studyo_adi}
+            baslik: "Karakter realizmi için yaz"
+            cta: WHATSAPP_MESSAGE
+            karsilama: "Merhaba! Karakter/karanlık tema bir dövme için görüşmek istiyorum."
+
+          - kod: F4
+            faz: 2
+            format: tekli_gorsel
+            kreatif: "akis_4x5/F04.jpg + hikaye_9x16/F04.jpg"
+            metin: |
+              Renkte de aynı ustalık.
+              Tek kullanımlık iğne · sterilize ekipman · iyileşme takibi.
+              Renkli realizm projeleri için fikrini yaz, ücretsiz tasarım görüşmesiyle başlayalım.
+              📍 Bahçeşehir · {studyo_adi}
+            baslik: "Renkli realizm projeni konuşalım"
+            cta: WHATSAPP_MESSAGE
+            karsilama: "Merhaba! Renkli realizm projem için görüşmek istiyorum."
+
+  - kod: B
+    ad: "EM | Yeniden Hedefleme | WhatsApp (FAZ 2)"
+    faz: 2
     amac: OUTCOME_ENGAGEMENT
     optimizasyon: CONVERSATIONS
     hedef_yeri: WHATSAPP
     butce_anahtari: meta_yeniden_hedefleme
-    neden: >
-      Seni zaten görmüş ama yazmamış kişileri geri çağırır. En ucuz randevular genelde buradan gelir.
-    on_kosul: >
-      Ads Manager > Kitleler'de şu özel kitleler oluşturulmalı (ID'leri aşağıya yaz):
-      1) Instagram hesabıyla etkileşim kuranlar — 60 gün
-      2) Videolarını %50+ izleyenler — 30 gün
-      3) Web sitesi ziyaretçileri — 30 gün (Pixel kuruluysa)
-      HARİÇ TUT: Mevcut müşteri listesi (telefon numaraları, KVKK onaylı)
-    ozel_kitle_idleri: []         # örn. ["1202...", "1202..."]
-    haric_kitle_idleri: []
+    neden: "Faz 2 geçiş kriterleri sağlanınca ve günlük bütçe ≥ 450 TL olunca. Kitle < 3.000 kişiyse açılmaz."
+    ozel_kitle_idleri: []
     reklam_setleri:
-      - kod: K3-A
-        ad: "K3-A | Etkileşim 60g + Video %50 30g"
+      - kod: B1
+        ad: "B1 | Sıcak | IG etkileşim 365g + video %50 30g | 18km"
         kitle: ozel
         reklamlar:
-          - kod: K3-01
+          - kod: B1V
+            faz: 2
             format: reels
-            kreatif: "{sanatci} kısa konuşma: 'Fikrin net değilse sorun değil' + eskiz örnekleri."
-            ekran_yazisi: "Fikrin henüz net değil mi?"
+            kreatif: "V1 konuşma videosu veya iyileşmiş yan yana görsel"
             metin: |
-              Fikrin netleşmediyse sorun değil.
-              Bir fotoğraf, bir kelime ya da bir anı yeter — gerisini birlikte çizeriz.
-              Ücretsiz tasarım görüşmesi için yaz.
+              Fikrin henüz net değil mi?
+              Tek kullanımlık iğne · sterilize ekipman · iyileşme takibi.
+              Bir fotoğraf ya da bir anı yeter; gerisini ücretsiz tasarım görüşmesinde birlikte çizeriz.
+              📍 Bahçeşehir
             baslik: "Ücretsiz tasarım görüşmesi"
             cta: WHATSAPP_MESSAGE
             karsilama: "Merhaba! Ücretsiz tasarım görüşmesi istiyorum."
-
-          - kod: K3-02
-            format: carousel
-            kreatif: "Gerçek Google yorumlarının ekran görüntüleri (isimler müşteri izniyle) + ilgili dövmenin fotoğrafı."
-            metin: |
-              Bizi müşterilerimiz anlatsın. ⭐
-              Google yorumlarımızı oku, sonra fikrini bize yaz.
-            baslik: "Müşterilerimiz ne diyor?"
-            cta: WHATSAPP_MESSAGE
-            karsilama: "Merhaba! Yorumlarınızı gördüm, dövme yaptırmak istiyorum."

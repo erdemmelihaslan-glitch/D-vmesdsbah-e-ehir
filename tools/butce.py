@@ -16,9 +16,9 @@ from ortak import ayarlar, tl
 
 GUN = 30.4
 ETIKET = {
-    "meta_kesif_reels": "K1 Meta Keşif (Reels)",
-    "meta_mesaj": "K2 Meta Mesaj (WhatsApp)",
-    "meta_yeniden_hedefleme": "K3 Meta Yeniden Hedefleme",
+    "meta_kesif_reels": "Meta Keşif (Reels)",
+    "meta_mesaj": "A1 Meta Mesaj (WhatsApp)",
+    "meta_yeniden_hedefleme": "B1 Meta Yeniden Hedefleme",
     "google_arama": "G1 Google Arama",
 }
 SENARYO = ["İyi", "Orta", "Kötü"]
@@ -28,7 +28,9 @@ def plan(cfg: dict, aylik: float) -> dict:
     b = cfg["butce"]
     v = cfg["varsayimlar"]
     f = cfg["fiyatlar"]
-    kanallar = {k: aylik * oran for k, oran in b["dagilim"].items()}
+    if b.get("ucret_dahil"):
+        aylik = aylik / (1 + b.get("ek_ucret_orani", 0))   # 10.000 TL ücret dahil → harcama ~9.524 TL
+    kanallar = {k: aylik * oran for k, oran in b["dagilim"].items() if oran > 0}
     mesaj_butce = kanallar.get("meta_mesaj", 0) + kanallar.get("meta_yeniden_hedefleme", 0)
     google_butce = kanallar.get("google_arama", 0)
 
@@ -46,8 +48,10 @@ def plan(cfg: dict, aylik: float) -> dict:
                  randevu_basi=aylik / randevu if randevu else 0,
                  roas=ciro / aylik if aylik else 0)
         )
+    ana = kanallar.get("meta_mesaj", 0) / GUN
+    ogrenme = [ana * 7 / m for m in v["mesaj_basi_maliyet_tl"]]   # haftalık sohbet (tek set)
     return dict(aylik=aylik, kanallar=kanallar, ek=aylik * b.get("ek_ucret_orani", 0),
-                senaryolar=senaryolar)
+                senaryolar=senaryolar, ogrenme=ogrenme, esik=50 * v["mesaj_basi_maliyet_tl"][1] / 7)
 
 
 def yazdir(p: dict):
@@ -58,12 +62,15 @@ def yazdir(p: dict):
     print(f"{'+ Meta konum ücreti vb. (tahmini)':32}{tl(p['ek']):>10}")
     print(f"{'TOPLAM ÇIKIŞ':32}{tl(p['aylik'] + p['ek']):>10}\n")
 
-    print("Beklenen aylık sonuç (varsayımlara göre — garanti değildir):")
+    print("Beklenen aylık sonuç (varsayımlara göre — garanti değildir; ortalama proje tutarı TAHMİN):")
     print(f"{'Senaryo':10}{'Mesaj':>8}{'Ciddi':>8}{'Randevu':>9}{'Randevu başı':>14}{'Ciro':>12}{'ROAS':>7}")
     for s in p["senaryolar"]:
         print(f"{s['ad']:10}{s['mesaj']:>8.0f}{s['ciddi']:>8.0f}{s['randevu']:>9.0f}"
               f"{tl(s['randevu_basi']):>11} TL{tl(s['ciro']):>9} TL{s['roas']:>6.1f}x")
-    print("\nROAS = reklamdan gelen ciro / reklam harcaması. 3x altı: kreatif veya teklif değişmeli.")
+    og = p["ogrenme"]
+    print(f"\nÖğrenme (Meta: set başına ~50 sohbet/hafta): ana set haftada {og[0]:.0f} / {og[1]:.0f} / {og[2]:.0f} sohbet "
+          f"(iyi/orta/kötü). Orta senaryoda 50 için gereken: ~{tl(p['esik'])} TL/gün.")
+    print("ROAS = reklamdan gelen ciro / reklam harcaması. Ana ölçüt: kapora başı maliyet (config > kpi).")
 
 
 def main():

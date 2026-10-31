@@ -55,14 +55,21 @@ def hedefleme(cfg: dict, kamp: dict) -> dict:
 
 def plan(cfg: dict) -> list[dict]:
     meta = yukle("ads/meta/kampanyalar.yaml")
-    aylik = cfg["butce"]["aylik_toplam_tl"]
+    b = cfg["butce"]
+    aylik = b["aylik_toplam_tl"] / (1 + b.get("ek_ucret_orani", 0)) if b.get("ucret_dahil") else b["aylik_toplam_tl"]
     dag = cfg["butce"]["dagilim"]
     cikti = []
     for k in meta["kampanyalar"]:
-        if k["kod"] == "K3" and not k.get("ozel_kitle_idleri"):
+        if str(k.get("faz", 1)) == "2":
+            print(f"⏭  {k['kod']} atlandı: Faz 2 kampanyası (geçiş kriterleri: kurul/plan-v2.md).")
+            continue
+        if k.get("kitle") == "ozel" and not k.get("ozel_kitle_idleri"):
             print(f"⏭  {k['kod']} atlandı: önce özel kitleleri oluştur, ID'leri kampanyalar.yaml'a yaz.")
             continue
         setler = k["reklam_setleri"]
+        if dag.get(k["butce_anahtari"], 0) <= 0:
+            print(f"⏭  {k['kod']} atlandı: bütçe payı 0.")
+            continue
         gunluk = aylik * dag[k["butce_anahtari"]] / GUN / len(setler)
         for s in setler:
             adset = {

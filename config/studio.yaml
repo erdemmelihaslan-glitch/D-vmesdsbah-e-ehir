@@ -33,8 +33,10 @@ stiller:
 
 reklam:
   fiyat_goster: false             # Stüdyo kararı: reklamlarda fiyat YOK (kontrol.py denetler)
-  ucretsiz_rotus: true            # Sahibi onayladı
   ucretsiz_tasarim_gorusmesi: true
+  ucretsiz_rotus: true            # Sahibi onayladı. AMA süre/şart belli olana kadar reklam metninde YOK (kurul kararı)
+  rotus_suresi_ay: null           # SAHİBE SOR: "ilk X ay, bakım talimatına uyulması şartıyla"
+  kvkk_link: "landing/kvkk.html"  # yayınlanınca tam adres yazılacak
 
 # Fiyatlar (TL). Reklamda "başlangıç fiyatı" göstermek dönüşümü artırır.
 # Henüz bilinmiyorsa boş bırakma, tahmini yaz — sonra güncellenir.
@@ -47,31 +49,52 @@ fiyatlar:
 
 # Reklam bütçesi
 butce:
-  aylik_toplam_tl: 10000          # Sahibin bütçesi; öğrenme için gerekirse artırılabilir (kurul kararı: kurul/)
+  aylik_toplam_tl: 10000          # Sahibin bütçesi (Meta %5 konum ücreti DAHİL) → günlük ~313 TL
+  ucret_dahil: true               # true: aylık tutar ücret dahil, harcama = aylık / (1 + ek_ucret_orani)
   # Kanal dağılımı (toplam 1.00 olmalı)
+  # FAZ 1 (kurul tur 1): tek kampanya, tek set → tüm bütçe A1'e. Bölmek öğrenmeyi öldürür.
   dagilim:
-    meta_kesif_reels: 0.20        # K1 — yeni kitle, video izleyen havuzu
-    meta_mesaj: 0.50              # K2 — ana müşteri kaynağı (WhatsApp + IG DM)
-    meta_yeniden_hedefleme: 0.10  # K3 — sıcak kitle
-    google_arama: 0.20            # G1 — "bahçeşehir dövme" arayanlar
+    meta_mesaj: 1.00              # A1 — WhatsApp sohbet, Advantage+ (ana ve tek set)
+    meta_yeniden_hedefleme: 0.00  # A2 — Faz 2'de (≥450 TL/gün olunca)
+    meta_kesif_reels: 0.00        # kullanılmıyor (A1 Reels kreatifleri keşfi de yapar)
+    google_arama: 0.00            # G1 — Faz 2'de, EK bütçe + sahip onayıyla
   # Meta Türkiye konum ücreti (%5) vb. — faturada ayrı satır olarak gelir.
   # KDV durumu işletme tipine göre değişir: muhasebecine sor.
   ek_ucret_orani: 0.05
 
 # Hedefleme
 hedefleme:
-  yaricap_km: 25                  # Realizm müşterisi sanatçı için yol gelir → Avrupa yakası batısı
-  yas_min: 21                     # ASLA 18 altı yapma. 21 = satın alma gücü kontrolü (Advantage+ min yaş kontrolü)
-  yas_max: 50
-  diller: ["tr"]
+  yaricap_km: 18                  # Kurul: 25 km Şişli/Taksim dövme merkezine taşıyordu → 18 km
+  yas_min: 21                     # ASLA 18 altı yapma. 21 = Advantage+ kesin minimum yaş kontrolü
+  yas_max: 65                     # üst sınır yok (Advantage+ öneri: 24–44)
+  diller: []                      # dil kontrolü yok
 
 # Performans varsayımları — ilk 14 günden sonra GERÇEK verinle değiştir
 varsayimlar:
-  mesaj_basi_maliyet_tl: [25, 45, 70]     # [iyi, orta, kötü]
-  gercek_musteri_orani: 0.40              # mesajların kaçı ciddi talep
-  randevu_orani: [0.25, 0.20, 0.12]       # ciddi taleplerin kaçı kapora verir [iyi, orta, kötü]
+  mesaj_basi_maliyet_tl: [35, 45, 70]     # [iyi, orta, kötü] — senaryo için
+  gercek_musteri_orani: 0.35              # mesajların kaçı CİDDİ TALEP (tanım: kurul/plan-v2.md §5)
+  randevu_orani: [0.18, 0.12, 0.07]       # ciddi taleplerin kaçı kapora verir [iyi, orta, kötü] (realizm: daha uzun karar süreci)
   google_tik_maliyeti_tl: [4, 8, 15]
   google_tik_mesaj_orani: 0.12            # sitede WhatsApp'a tıklayanlar
+
+# KPI ve durdurma kuralları (kurul tur 1: TEK KPI seti)
+kpi:
+  hedef_mesaj_basi_tl: 45         # sohbet başı hedef (tek değer)
+  gun7_durdur_mesaj_basi_tl: 100  # 7. gün > 100 TL → en kötü 2 reklamı kapat
+  reklam_kapat_harcama_tl: 150    # bir reklam 150 TL harcayıp 0 sohbet → kapat
+  kapora_basi_hedef_orani: 0.25   # kapora başı maliyet ≤ ortalama proje × 0,25
+  kapora_basi_durdur_orani: 0.50  # > ortalama proje × 0,50 → durdur
+  gun14_min_ciddi_talep: 10
+  gun30_min_kapora: 2
+  gun45_min_rezerve_kat: 1.5      # rezerve ciro ≥ harcama × 1,5
+  test_kayip_tavani_tl: 20000     # SAHİP ONAYINA SUNULDU
+  max_gunluk_tl_onaysiz: 450      # %20'lik artışlar burada durur; üstü yeni onay
+
+kapasite:
+  max_tasarim_gorusmesi_hafta: 8
+  bos_gun_kis_hafta: 4            # ilk boş tam gün > 4 hafta → A1 %50 kıs
+  bos_gun_dur_hafta: 6            # > 6 hafta → reklam dur, fiyat konuşulur
+  cevap_hedef_dk: 30              # 11:00–21:00 insan cevabı (otomatik karşılama anında)
 
 # Takip
 takip:

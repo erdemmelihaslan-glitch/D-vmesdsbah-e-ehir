@@ -3,18 +3,26 @@
 > Reklam mesaj getirir, **randevuyu mesaj süreci getirir.** 100 mesajdan 10 randevu çıkarmakla 25 randevu çıkarmak arasındaki fark reklamda değil, bu sayfada.
 
 ## Altın kurallar
-1. **5 dakika içinde cevap ver.** 1 saat sonra müşteri başka stüdyoya yazmış olur.
+1. **Otomatik karşılama anında, insan cevabı ≤ 30 dk** (11:00–21:00). Karşılama mesajı müşteriyi oyalamaz; eleme sorularını sorar.
 2. **Fiyatı saklama, aralık ver + soru sor.** "Fiyat için gelin" diyen kaybeder.
 3. **Her mesajı bir soruyla bitir.** Konuşma ancak böyle ilerler.
 4. **Sesli mesaj** at (30 sn): güveni hızla kurar. Sanatçının sesi çok etkilidir.
 5. **Kodu kaydet:** Mesajın sonundaki `[K2-02]` → `takip/musteri-takip.csv` → `kaynak_kodu`.
 
-## WhatsApp Business kurulumu
-- **Karşılama mesajı** (otomatik, ilk mesajda):
-  > Merhaba, {studyo_adi}'na hoş geldin! 🖤 Ben {sanatci}. Aklındaki dövmenin bir fotoğrafını ya da fikrini, istediğin yeri ve yaklaşık boyutu yazarsan sana hemen dönüyorum.
+## WhatsApp Business kurulumu (kurul tur 1 kararıyla güncellendi)
+- **Karşılama mesajı** (otomatik, ilk mesajda; Erdem'in ağzından):
+  > Merhaba, ben Erdem Melih 🖤 Mesajın bana ulaştı. Çalışma saatlerinde (11:00–21:00) genelde **30 dakika içinde** dönüyorum; seanstaysam biraz uzayabilir, ama mutlaka dönüyorum.
+  > Hızlanmak için şunları gönderebilirsin:
+  > 1️⃣ Fikrin ya da referans fotoğrafın
+  > 2️⃣ Dövmenin yeri (kol, bacak, sırt…)
+  > 3️⃣ Yaklaşık boyutu
+  > 4️⃣ Hangi semttesin, ne zaman düşünüyorsun?
+  > Fiyatı tasarım netleşince yazılı olarak iletiyorum. Kişisel verilerin: {kvkk_link}
 - **Uzakta mesajı** (mesai dışı):
-  > Şu an seanstayım ya da stüdyo kapalı. Mesajını aldım, ilk fırsatta (genelde 1 saat içinde) dönüyorum. Bu arada işlerime bak: instagram.com/{instagram}
-- **Etiketler:** 🟡 Yeni · 🔵 Fiyat verildi · 🟢 Kapora alındı · 🟣 Randevu · ✅ Tamamlandı · ⭐ Yorum istendi · ⚪ Kayıp
+  > Şu an stüdyo kapalı. Mesajını aldım, yarın 11:00'den itibaren ilk iş sana dönüyorum. Bu arada işlerime bak: instagram.com/{instagram}
+- **Etiketler:** 🟡 Yeni · 🟠 Ciddi talep · 🔵 Fiyat verildi · 🟢 Kapora alındı · 🟣 Randevu · ✅ Tamamlandı · ⭐ Yorum istendi · ⚪ Kayıp · 📣 Duyuru-Onaylı
+- **"Ciddi talep" tanımı (rapor için):** Bölgesini, yaklaşık boyutunu ve fikrini/referansını paylaşan VE tasarım görüşmesi ya da fiyat aşamasına gelen kişi. Sadece bunlar `takip/musteri-takip.csv`'ye yazılır.
+- **Kod:** Mesajın sonundaki (R1), (C1), (F5)… → takip dosyasında `kaynak_kodu`. Kod yoksa WhatsApp sohbetin üstündeki "reklamdan geldi" kartına bak.
 - **Hızlı yanıtlar** (`/` ile çağrılır): aşağıdaki şablonları `/fiyat`, `/kapora`, `/bakim`, `/yorum` olarak kaydet.
 
 ---
@@ -33,7 +41,7 @@
 > Bu hafta {gün1} veya {gün2} müsaitim. Hangisi sana uyar?
 
 ### /pahali: "Pahalı" itirazı
-> Haklısın, en ucuzu biz değiliz 🙂 Dövme ömür boyu seninle kalıyor. O yüzden steril ortam, temiz çizgi ve iyileşme takibine yatırım yapıyoruz. İstersen boyutu biraz küçültüp {Y} TL'ye uyarlayabilirim, ya da tasarımı sadeleştirebiliriz. Hangisi daha çok içine siner?
+> Haklısın, en ucuzu biz değiliz 🙂 Dövme ömür boyu seninle kalıyor. O yüzden sterilize ekipman, temiz çizgi ve iyileşme takibine yatırım yapıyoruz. İstersen boyutu biraz küçültüp {Y} TL'ye uyarlayabilirim, ya da tasarımı sadeleştirebiliriz. Hangisi daha çok içine siner?
 
 ### /dusunecegim: "Düşüneceğim"
 > Tabii, acelesi yok! Kafandaki soru acı mı, fiyat mı, yoksa tasarım mı? Söylersen yardımcı olayım. Bu arada benzer işlerimden birkaçını atıyorum 👇

@@ -17,7 +17,7 @@ import csv
 from collections import defaultdict
 from datetime import date, datetime, timedelta
 
-from ortak import CIKTI, KOK, ayarlar, tl
+from ortak import CIKTI, KOK, ayarlar, tl, yukle
 
 KAZANILAN = {"kapora", "tamamlandi"}
 CIDDI = {"fiyat_verildi", "kapora", "tamamlandi"}
@@ -65,26 +65,48 @@ def main():
     harcama = [r for r in harcama if (t := tarih(r["hafta_baslangic"])) and t >= bas - timedelta(days=6)]
     musteriler = [r for r in musteriler if (t := tarih(r["tarih"])) and t >= bas]
 
-    hedef_mesaj = cfg["varsayimlar"]["mesaj_basi_maliyet_tl"][1]
+    kpi = cfg.get("kpi", {})
+    hedef_mesaj = kpi.get("hedef_mesaj_basi_tl", cfg["varsayimlar"]["mesaj_basi_maliyet_tl"][1])
     ort_is = cfg["fiyatlar"]["ortalama_is_tutari"]
+    kapora_hedef = ort_is * kpi.get("kapora_basi_hedef_orani", 0.25)
+    kapora_dur = ort_is * kpi.get("kapora_basi_durdur_orani", 0.5)
+
+    # Kod → kampanya eşlemesi (reklam kodu "R1", set kodu "A1", kampanya "A" → "A")
+    harita = {}
+    for kk in yukle("ads/meta/kampanyalar.yaml").get("kampanyalar", []):
+        harita[kk["kod"].upper()] = kk["kod"].upper()
+        for s in kk.get("reklam_setleri", []):
+            harita[s["kod"].upper()] = kk["kod"].upper()
+            for r in s.get("reklamlar", []):
+                harita[r["kod"].upper()] = kk["kod"].upper()
+
+    def kampanya_of(kod: str) -> str:
+        kod = kod.strip().upper()
+        if kod.startswith("ORG"):
+            return "ORGANIK"
+        if kod in harita:
+            return harita[kod]
+        return kod.split("-")[0]
 
     kamp = defaultdict(lambda: defaultdict(float))
     for r in harcama:
-        k = r["kod"].strip().upper()
+        k = kampanya_of(r["kod"])
         for alan in ("harcama_tl", "gosterim", "tiklama", "mesaj"):
             kamp[k][alan] += sayi(r.get(alan))
 
     reklam = defaultdict(lambda: defaultdict(float))
     for m in musteriler:
         kod = (m.get("kaynak_kodu") or "BILINMIYOR").strip().upper()
-        k = kod.split("-")[0] if not kod.startswith("ORG") else "ORGANIK"
+        k = kampanya_of(kod)
         durum = (m.get("durum") or "").strip()
+        odenen, teklif = sayi(m.get("odenen_tl")), sayi(m.get("teklif_tl"))
         for hedef in (kamp[k], reklam[kod]):
             hedef["talep"] += 1
             hedef["ciddi"] += durum in CIDDI
             hedef["randevu"] += durum in KAZANILAN
-            # Ciro: ödenen yoksa kaporalı işlerin teklifini beklenen ciro say
-            hedef["ciro"] += sayi(m.get("odenen_tl")) or (sayi(m.get("teklif_tl")) if durum == "kapora" else 0)
+            hedef["tahsil"] += odenen                                   # kasaya giren
+            hedef["rezerve"] += max(0.0, teklif - odenen) if durum in KAZANILAN else 0  # kaporalı, henüz ödenmemiş
+            hedef["ciro"] += odenen + (max(0.0, teklif - odenen) if durum in KAZANILAN else 0)
 
     satir = []
     p = satir.append
@@ -95,8 +117,12 @@ def main():
     top_r = sum(v["randevu"] for v in ucretli.values())
     top_c = sum(v["ciro"] for v in ucretli.values())
     top_t = sum(v["talep"] for v in ucretli.values())
-    p(f"**Reklam harcaması:** {tl(top_h)} TL · **Reklamdan talep:** {top_t:.0f} · **Randevu:** {top_r:.0f} · "
-      f"**Ciro:** {tl(top_c)} TL · **ROAS:** {(top_c / top_h if top_h else 0):.1f}x")
+    top_ts = sum(v["tahsil"] for v in ucretli.values())
+    top_ciddi = sum(v["ciddi"] for v in ucretli.values())
+    kb = top_h / top_r if top_r else 0
+    p(f"**Reklam harcaması:** {tl(top_h)} TL · **Talep:** {top_t:.0f} (ciddi {top_ciddi:.0f}) · **Kapora/randevu:** {top_r:.0f}")
+    p(f"**Kapora başı maliyet:** {tl(kb) + ' TL' if kb else '–'} (hedef ≤ {tl(kapora_hedef)} · durdur > {tl(kapora_dur)}) · "
+      f"**Tahsil edilen:** {tl(top_ts)} TL · **Rezerve:** {tl(top_c - top_ts)} TL · **ROAS (toplam):** {(top_c / top_h if top_h else 0):.1f}x")
     org = kamp.get("ORGANIK")
     if org:
         p(f"_Organik (bio, Google profil, tavsiye): {org['talep']:.0f} talep, {org['randevu']:.0f} randevu, {tl(org['ciro'])} TL — ROAS'a dahil değil._")
@@ -110,9 +136,7 @@ def main():
         rb = h / v["randevu"] if v["randevu"] else 0
         roas = v["ciro"] / h if h else 0
         p(f"| {k} | {tl(h)} | {v['mesaj']:.0f} | {tl(mb) if mb else '–'} | {v['talep']:.0f} | {v['ciddi']:.0f} | "
-          f"{v['randevu']:.0f} | {tl(rb) if rb else '–'} | {tl(v['ciro'])} | {f'{roas:.1f}x' if h and k != 'K1' else '–'} |")
-    p("")
-    p("_K1 keşif kampanyasıdır: satış değil, izlenme ve yeniden hedefleme kitlesi üretir._")
+          f"{v['randevu']:.0f} | {tl(rb) if rb else '–'} | {tl(v['ciro'])} | {f'{roas:.1f}x' if h else '–'} |")
     p("")
     p("## Reklam bazında (müşteri takibinden)")
     p("| Kod | Talep | Ciddi | Randevu | Dönüşüm | Ciro |")
@@ -125,12 +149,14 @@ def main():
     oneriler = []
     for k, v in sorted(kamp.items()):
         h = v["harcama_tl"]
-        if k == "K1" or h == 0:
+        if h == 0:
             continue
+        if v["randevu"] and h / v["randevu"] > kapora_dur and h >= kapora_dur:
+            oneriler.append(f"🔴 **{k}**: kapora başı {tl(h / v['randevu'])} TL > durdurma eşiği {tl(kapora_dur)}. Kurul kuralı: durdur ve revize et.")
         if v["mesaj"]:
             mb = h / v["mesaj"]
-            if mb > 2 * hedef_mesaj and h >= 1000:
-                oneriler.append(f"🔴 **{k}**: mesaj başı {tl(mb)} TL (hedef ~{hedef_mesaj}). En kötü reklamı durdur, yeni kanca (ilk 2 sn) dene.")
+            if mb > kpi.get("gun7_durdur_mesaj_basi_tl", 2 * hedef_mesaj) and h >= 1000:
+                oneriler.append(f"🔴 **{k}**: sohbet başı {tl(mb)} TL (hedef {hedef_mesaj}). En kötü 2 reklamı kapat, yeni kanca dene.")
             elif mb < 0.7 * hedef_mesaj:
                 oneriler.append(f"🟢 **{k}**: mesaj başı {tl(mb)} TL — hedefin altında. Bütçeyi 3 günde bir %20 artır.")
         roas = v["ciro"] / h if h else 0
@@ -147,7 +173,7 @@ def main():
     if yorumsuz:
         oneriler.append(f"⭐ {len(yorumsuz)} tamamlanmış işten Google yorumu istenmemiş. Yorum = bedava reklam.")
     if not oneriler:
-        oneriler.append("Veri az. En az 7 gün ve kampanya başına ~1.000 TL harcamadan karar verme.")
+        oneriler.append("Veri az. 72 saat dokunma; kararları set düzeyinde ver. 150 TL harcayıp 0 sohbet getiren reklamı kapat.")
     p("")
     p("## Ne yapmalı?")
     for o in oneriler:
