@@ -1,0 +1,72 @@
+# ============================================================
+#  STÜDYO AYARLARI — tüm araçlar ve reklam metinleri buradan okur
+#  "DOLDUR" yazan yerleri kendi bilgilerinle değiştir.
+#  Değiştirdikten sonra:  python3 tools/kontrol.py
+# ============================================================
+
+studyo:
+  adi: "DOLDUR Stüdyo Adı"            # örn. "Mürekkep Tattoo"
+  sanatci: "DOLDUR Sanatçı Adı"        # yüzün olan kişi — reklamlarda kişi > marka
+  instagram: "DOLDUR_instagram"        # @ olmadan
+  telefon_whatsapp: "905000000000"     # başında 90, boşluksuz (wa.me linki için)
+  adres: "DOLDUR Açık adres, Bahçeşehir, Başakşehir/İstanbul"
+  google_maps_link: "https://maps.google.com/?q=Bahcesehir+Istanbul"   # İşletme profilinin linki
+  google_yorum_linki: "DOLDUR"         # İşletme Profili > "Yorum iste" linki
+  web_sitesi: "https://DOLDUR.com"     # yoksa landing/index.html'i yayınlayacağız
+  calisma_saatleri: "Her gün 11:00–21:00"
+  # Stüdyonun konumu (Google Maps'te adrese sağ tık → koordinatı kopyala)
+  konum:
+    enlem: 41.0700
+    boylam: 28.6700
+
+# Hangi stilleri yapıyorsun? Yapmadıklarını false yap — reklamlar buna göre üretilir.
+stiller:
+  minimal_fine_line: true
+  yazi_isim_tarih: true
+  blackwork: true
+  realistik_portre: true
+  renkli: false
+  dovme_kapatma_cover_up: true
+  piercing: false
+
+# Fiyatlar (TL). Reklamda "başlangıç fiyatı" göstermek dönüşümü artırır.
+# Henüz bilinmiyorsa boş bırakma, tahmini yaz — sonra güncellenir.
+fiyatlar:
+  minimal_baslangic: 2500
+  orta_boy_baslangic: 6000        # ~10-15 cm
+  buyuk_seans_gunluk: 15000       # tam gün seans
+  kapora: 1000                    # randevu kaporası
+  ortalama_is_tutari: 5000        # raporlarda ROAS hesabı için
+
+# Reklam bütçesi
+butce:
+  aylik_toplam_tl: 15000          # 7500 / 15000 / 30000 önerilir
+  # Kanal dağılımı (toplam 1.00 olmalı)
+  dagilim:
+    meta_kesif_reels: 0.20        # K1 — yeni kitle, video izleyen havuzu
+    meta_mesaj: 0.50              # K2 — ana müşteri kaynağı (WhatsApp + IG DM)
+    meta_yeniden_hedefleme: 0.10  # K3 — sıcak kitle
+    google_arama: 0.20            # G1 — "bahçeşehir dövme" arayanlar
+  # Meta Türkiye konum ücreti (%5) vb. — faturada ayrı satır olarak gelir.
+  # KDV durumu işletme tipine göre değişir: muhasebecine sor.
+  ek_ucret_orani: 0.05
+
+# Hedefleme
+hedefleme:
+  yaricap_km: 12                  # Bahçeşehir + Esenyurt, Avcılar, Beylikdüzü, Başakşehir
+  yas_min: 18                     # ASLA 18 altı yapma (Meta kuralı + yasa teklifi)
+  yas_max: 45
+  diller: ["tr"]
+
+# Performans varsayımları — ilk 14 günden sonra GERÇEK verinle değiştir
+varsayimlar:
+  mesaj_basi_maliyet_tl: [25, 45, 70]     # [iyi, orta, kötü]
+  gercek_musteri_orani: 0.40              # mesajların kaçı ciddi talep
+  randevu_orani: [0.25, 0.20, 0.12]       # ciddi taleplerin kaçı kapora verir [iyi, orta, kötü]
+  google_tik_maliyeti_tl: [4, 8, 15]
+  google_tik_mesaj_orani: 0.12            # sitede WhatsApp'a tıklayanlar
+
+# Takip
+takip:
+  meta_pixel_id: ""               # Events Manager → Pixel ID (landing sayfası için)
+  utm_kaynak_web: "https://DOLDUR.com"

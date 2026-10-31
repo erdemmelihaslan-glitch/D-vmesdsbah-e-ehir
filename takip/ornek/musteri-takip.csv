@@ -1,0 +1,13 @@
+tarih,musteri,kaynak_kodu,stil,durum,teklif_tl,kapora_tl,odenen_tl,randevu_tarihi,yorum_istendi,not
+2026-11-02,A.Y.,K2-02,minimal,tamamlandi,2500,1000,2500,2026-11-06,e,bilek yazı
+2026-11-02,M.K.,K2-01,blackwork,kapora,7000,1000,0,2026-11-14,h,
+2026-11-03,S.D.,K2-02,minimal,fiyat_verildi,3000,0,0,,h,düşünecek
+2026-11-03,E.T.,K2-02,minimal,kayip,2500,0,0,,h,fiyat yüksek dedi
+2026-11-03,B.A.,G1-AG1,realistik,kapora,12000,1000,0,2026-11-20,h,portre
+2026-11-04,C.Ö.,K2-03,kapatma,fiyat_verildi,8000,0,0,,h,fotoğraf geldi
+2026-11-04,D.Y.,K3-01,fine line,tamamlandi,3500,1000,3500,2026-11-07,e,
+2026-11-05,F.G.,K2-01,yazı,yeni,,,,,h,
+2026-11-05,H.İ.,ORG-GMB,minimal,tamamlandi,2500,1000,2500,2026-11-08,e,
+2026-11-06,K.L.,K2-02,minimal,kayip,,,,,h,cevap vermedi
+2026-11-06,N.P.,K2-01,blackwork,fiyat_verildi,6500,0,0,,h,
+2026-11-07,R.S.,G1-AG2,minimal,kapora,2500,1000,0,2026-11-12,h,

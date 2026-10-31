@@ -1,0 +1,74 @@
+# Kampanya düzeyinde NEGATİF anahtar kelimeler (geniş eşleme)
+# Bu aramalarda reklamın ÇIKMAZ → boşa para harcanmaz.
+# Yaptığın bir hizmet varsa (ör. dövme silme) ilgili satırı sil.
+# Her hafta "Arama terimleri" raporuna bak, alakasızları buraya ekle.
+
+# --- Ürün / malzeme arayanlar (müşteri değil) ---
+dövme makinesi
+makine
+mürekkep
+boya
+dövme seti
+iğne satın
+satılık
+ikinci el
+toptan
+trendyol
+hepsiburada
+amazon
+
+# --- Geçici / kendin yap ---
+geçici
+kına
+henna
+sticker
+çıkartma
+evde
+kendi kendine
+nasıl yapılır
+kalem ile
+
+# --- Silme / lazer (yapmıyorsan) ---
+silme
+sildirme
+lazer
+dövme silme
+
+# --- Eğitim / iş ---
+kurs
+eğitim
+sertifika
+iş ilanı
+eleman
+maaş
+staj
+
+# --- Bilgi / eğlence aramaları ---
+anlamı
+anlamları
+rüyada
+caiz
+haram
+günah
+oyun
+png
+wallpaper
+duvar kağıdı
+çizim pdf
+şablon indir
+ünlü
+futbolcu
+
+# --- Ücretsiz arayanlar ---
+bedava
+ücretsiz dövme
+
+# --- Başka şehirler (gerekirse çoğalt) ---
+ankara
+izmir
+antalya
+bursa
+kadıköy
+beşiktaş
+şişli
+taksim

@@ -1,0 +1,8 @@
+# Gizli bilgiler
+.env
+kurulum/.env
+*.token
+google-ads.yaml
+# Araç çıktıları: raporlar kişisel veri içerebilir
+cikti/rapor-*.md
+__pycache__/

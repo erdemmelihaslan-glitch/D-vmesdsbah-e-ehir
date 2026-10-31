@@ -1,0 +1,150 @@
+# ============================================================
+#  GOOGLE ADS — ARAMA KAMPANYASI (G1)
+#  Bu dosyadan Google Ads Editor'e yüklenebilir CSV üretilir:
+#      python3 tools/google_disa_aktar.py
+#  Başlık ≤ 30 karakter, açıklama ≤ 90 karakter (kontrol.py denetler)
+#  Eşleme: [köşeli] = tam eşleme, "tırnak" = sıralı eşleme
+# ============================================================
+
+kampanya:
+  ad: "G1 | Arama | Bahçeşehir + çevre"
+  butce_anahtari: google_arama
+  ag: "Yalnızca Arama Ağı (Görüntülü Reklam Ağı KAPALI, Arama ortakları KAPALI)"
+  teklif: "İlk 2 hafta: Tıklamaları en üst düzeye çıkar (TBM sınırı 15 TL). 15+ dönüşümden sonra: Dönüşümleri en üst düzeye çıkar."
+  konum: "Stüdyo çevresinde 12 km yarıçap — 'Varlık: hedef konumdaki veya düzenli olarak orada bulunan kişiler'"
+  dil: "Türkçe"
+  zaman: "Çalışma saatleri + 1 saat önce (mesajlara hızlı dönebileceğin saatler)"
+  donusumler:
+    - "WhatsApp butonuna tıklama (landing sayfasında)"
+    - "Telefon araması (arama öğesi)"
+    - "Yol tarifi (Google İşletme Profili bağlıysa)"
+  ogeler:
+    site_baglantilari:
+      - ["Portfolyo", "En yeni işlerimizi inceleyin", "#portfolyo"]
+      - ["Fiyatlar", "Başlangıç fiyatları ve kapora", "#sss"]
+      - ["Nasıl Çalışıyoruz", "Fikirden randevuya 4 adım", "#surec"]
+      - ["Konum", "Bahçeşehir'deki stüdyomuz", "#konum"]
+    aciklama_metinleri: ["Ücretsiz tasarım görüşmesi", "Tek kullanımlık iğne", "Randevulu çalışma", "İyileşme takibi"]
+    yapilandirilmis_snippet: { baslik: "Stiller", degerler: ["Minimal", "Fine line", "Yazı", "Blackwork", "Realistik", "Kapatma"] }
+    arama_ogesi: "{telefon_whatsapp}"
+    konum_ogesi: "Google İşletme Profilini bağla"
+
+reklam_gruplari:
+
+  - ad: "AG1 Bölge Dövme"
+    final_url: "{web_sitesi}"
+    yol: ["dovme", "bahcesehir"]
+    anahtar_kelimeler:
+      - "[bahçeşehir dövme]"
+      - "[bahçeşehir dövmeci]"
+      - "[bahçeşehir tattoo]"
+      - "\"bahçeşehir dövme stüdyosu\""
+      - "[başakşehir dövme]"
+      - "[başakşehir dövmeci]"
+      - "[esenyurt dövme]"
+      - "[esenyurt dövmeci]"
+      - "[avcılar dövme]"
+      - "[beylikdüzü dövme]"
+      - "[ispartakule dövme]"
+      - "[kayaşehir dövme]"
+      - "\"dövmeci yakınımda\""
+      - "\"dövme stüdyosu yakınımda\""
+      - "\"en yakın dövmeci\""
+    basliklar:
+      - "Bahçeşehir Dövme Stüdyosu"
+      - "Sana Özel Dövme Tasarımı"
+      - "Ücretsiz Tasarım Görüşmesi"
+      - "WhatsApp'tan Hemen Yaz"
+      - "Tek Kullanımlık İğne"
+      - "Randevulu Çalışıyoruz"
+      - "Minimal Dövme {minimal_baslangic} TL'den"
+      - "Başakşehir'de Dövme"
+      - "İyileşme Takibi ve Rötuş"
+      - "Fine Line, Blackwork, Yazı"
+      - "Portfolyomuzu İnceleyin"
+      - "İlk Dövmen İçin Doğru Yer"
+      - "Google Yorumlarımızı Okuyun"
+      - "Steril ve Hijyenik Ortam"
+      - "Bahçeşehir'de Dövme Sanatı"
+    aciklamalar:
+      - "Fikrini yaz, sana özel çizelim. Bahçeşehir'de steril ortamda randevulu dövme."
+      - "Minimal, fine line, yazı ve büyük işler. Net fiyatı WhatsApp'tan mesajla öğren."
+      - "Tek kullanımlık iğne, steril ekipman ve 18+ kimlik kontrolü. Bakım takibi bizden."
+      - "Esenyurt, Avcılar, Beylikdüzü ve Başakşehir'den kolay ulaşım. Randevunu şimdi al."
+
+  - ad: "AG2 Minimal ve Yazı"
+    gerekli_stil: minimal_fine_line
+    final_url: "{web_sitesi}"
+    yol: ["minimal", "dovme"]
+    anahtar_kelimeler:
+      - "\"minimal dövme\""
+      - "\"minimal dövme fiyatları\""
+      - "\"küçük dövme\""
+      - "\"fine line dövme\""
+      - "\"yazı dövmesi\""
+      - "\"isim dövmesi\""
+      - "\"tarih dövmesi\""
+      - "\"bilek dövmesi\""
+    basliklar:
+      - "Minimal Dövme {minimal_baslangic} TL'den"
+      - "Fine Line Dövme Bahçeşehir"
+      - "Yazı, İsim ve Tarih Dövmesi"
+      - "İlk Dövmen İçin Doğru Yer"
+      - "Net Fiyatı Mesajla Öğren"
+      - "WhatsApp'tan Hemen Yaz"
+      - "Sana Özel Minimal Tasarım"
+      - "Tek Kullanımlık İğne"
+      - "İnce Çizgi, Temiz İyileşme"
+      - "Randevulu Çalışıyoruz"
+      - "Bahçeşehir Dövme Stüdyosu"
+      - "Ücretsiz Tasarım Görüşmesi"
+    aciklamalar:
+      - "Yazı, tarih, sembol ve fine line. Yerini ve boyutunu birlikte seçelim."
+      - "Minimal dövmeler {minimal_baslangic} TL'den başlar. Fiyat boyut ve detaya göre değişir."
+      - "İlk dövmen mi? Acele etme: fikrini yaz, ücretsiz tasarım görüşmesinde netleştirelim."
+
+  - ad: "AG3 Dövme Kapatma"
+    gerekli_stil: dovme_kapatma_cover_up
+    final_url: "{web_sitesi}"
+    yol: ["dovme", "kapatma"]
+    anahtar_kelimeler:
+      - "\"dövme kapatma\""
+      - "\"eski dövme kapatma\""
+      - "\"cover up dövme\""
+      - "\"dövme düzeltme\""
+      - "\"dövme üstüne dövme\""
+    basliklar:
+      - "Dövme Kapatma Bahçeşehir"
+      - "Cover Up Dövme Uzmanı"
+      - "Ücretsiz Kapatma Değerlendirme"
+      - "Fotoğrafını WhatsApp'tan At"
+      - "Eski Dövmene Yeni Hikâye"
+      - "Sana Özel Kapatma Tasarımı"
+      - "Randevulu Çalışıyoruz"
+      - "Bahçeşehir Dövme Stüdyosu"
+      - "Tek Kullanımlık İğne"
+    aciklamalar:
+      - "Eski dövmenin fotoğrafını gönder, ücretsiz değerlendirelim ve tasarımı birlikte çizelim."
+      - "Koyu, büyük ve yaratıcı tasarımlarla kapatma. Gerçek kapatma örneklerimizi inceleyin."
+      - "Her kapatma farklıdır: önce değerlendirme, sonra sana özel çizim ve net fiyat."
+
+  - ad: "AG4 Piercing"
+    gerekli_stil: piercing
+    final_url: "{web_sitesi}"
+    yol: ["piercing", "bahcesehir"]
+    anahtar_kelimeler:
+      - "[bahçeşehir piercing]"
+      - "[esenyurt piercing]"
+      - "\"piercing yakınımda\""
+      - "\"burun piercing\""
+      - "\"kulak piercing\""
+    basliklar:
+      - "Bahçeşehir Piercing"
+      - "Steril Piercing Uygulaması"
+      - "Tek Kullanımlık İğne"
+      - "Randevunu WhatsApp'tan Al"
+      - "Kulak ve Burun Piercing"
+      - "Bakım Takibi Bizden"
+    aciklamalar:
+      - "Steril ortamda, tek kullanımlık iğne ile piercing. 18 yaş altına uygulama yapılmaz."
+      - "Kulak, burun ve daha fazlası. Takı seçeneklerini sormak için WhatsApp'tan yaz."

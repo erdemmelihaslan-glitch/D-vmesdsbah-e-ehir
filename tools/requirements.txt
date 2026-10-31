@@ -1,0 +1,6 @@
+# Temel araçlar (kontrol, bütçe, link, rapor, Google dışa aktarma)
+PyYAML>=6.0
+
+# İsteğe bağlı — API ile kurulum/okuma için resmi SDK'lar
+facebook-business>=21.0     # github.com/meta/facebook-python-business-sdk
+google-ads>=25.0            # github.com/googleads/google-ads-python
