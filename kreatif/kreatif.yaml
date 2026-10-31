@@ -1,0 +1,71 @@
+# ============================================================
+#  KREATİF ÜRETİM AYARLARI — python3 tools/kreatif_uret.py
+#  Editler sadece kadraj, ışık/kontrast, arka plan temizliği, format ve yazı içerir.
+#  DÖVMENİN KENDİSİ RÖTUŞLANMAZ (yanıltıcı reklam olur).
+# ============================================================
+
+marka:
+  ust: "ERDEM MELİH"
+  alt: "TATTOO STUDIO"
+  uzmanlik: "Black & Grey Realizm"
+  konum: "Bahçeşehir · İstanbul"
+  hesap: "@erdemmelih.ink"
+  cta: "Fikrini WhatsApp'tan yaz"
+
+fotograflar:
+  - dosya: 01-kurukafa-palyaco.jpg
+    kod: F01
+    temizle: [[55, 250, 122, 472]]   # sol kenardaki renkli etiket (x1,y1,x2,y2)
+    reklam: true
+  - dosya: 02-anubis-zeus-kol.jpg
+    kod: F02
+    reklam: true
+  - dosya: 03-palyaco-kadin-onkol.jpg
+    kod: F03
+    reklam: true
+  - dosya: 04-alev-kurukafa-renkli-baldir.jpg
+    kod: F04
+    reklam: true
+  - dosya: 05-yasli-adam-girdap-bacak.jpg
+    kod: F05
+    reklam: true
+  - dosya: 06-kopekbaligi-ahtapot-kol.jpg
+    kod: F06
+    reklam: true
+  - dosya: 07-cadi-bacak.jpg
+    kod: F07
+    kirp: [470, 700, 1430, 1900]     # reklam için dar kadraj: kalça/üst bacak dışarıda (Meta çıplaklık hassasiyeti)
+    reklam: true
+
+# Hikâye / Reels (9:16) görsellerinin üst yazısı
+hikaye_yazilari:
+  F01: "Yarısı kurukafa, yarısı palyaço."
+  F02: "Bir kol. İki tanrı."
+  F03: "Fotoğraf değil, dövme."
+  F04: "Renkli realizm de var."
+  F05: "Bakışlar tende yaşar."
+  F06: "Derinlik: siyah ve gri."
+  F07: "Bacaktan bir hikâye."
+
+carousel:
+  sira: [F05, F02, F03, F06, F01, F07]
+  kapanis_baslik: "Sıradaki hikâye senin."
+  kapanis_alt: "Fikrini yaz, tasarımı birlikte çizelim."
+
+videolar:
+  slayt_realizm:
+    cikti: R1-bu-bir-fotograf-degil.mp4
+    kanca: "BU BİR FOTOĞRAF DEĞİL."
+    kanca_alt: "Black & Grey Realizm"
+    sira: [F05, F03, F02, F06, F01, F07]
+    kare_suresi: 1.8
+  surec_sonuc:
+    cikti: R2-surecten-sonuca-alev.mp4
+    kaynak: v1-surec-alev-baldir.mov
+    kanca: "Bu baldır böyle yapıldı."
+    sonuc_foto: F04
+    sonuc_yazi: "Sonuç."
+  organik_mario:
+    cikti: ORGANIK-mario-surec.mp4
+    kaynak: v2-surec-mario-onkol.mov
+    not: "Nintendo karakteri — ücretli reklamda KULLANMA, sadece organik paylaşım."

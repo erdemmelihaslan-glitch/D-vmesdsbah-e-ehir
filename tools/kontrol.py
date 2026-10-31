@@ -52,7 +52,13 @@ def tr_kucuk(metin: str) -> str:
     return metin.replace("İ", "i").replace("I", "ı").lower()
 
 
+FIYAT_YASAK = False  # main() studio.yaml > reklam.fiyat_goster'a göre ayarlar
+_FIYAT = re.compile(r"\d[\d.]*\s*(tl|₺)|₺\s*\d|_baslangic|kapora\}", re.I)
+
+
 def riskli_tara(yer: str, metin: str):
+    if FIYAT_YASAK and _FIYAT.search(metin or ""):
+        hata(f"{yer}: fiyat geçiyor ama studio.yaml > reklam.fiyat_goster=false → '{metin.strip()[:60]}'")
     kucuk = tr_kucuk(metin)
     for ifade, neden in RISKLI.items():
         # kelime başında eşleşsin: "dövmen iyileşir" ≠ "en iyi"
@@ -125,6 +131,9 @@ def google_kontrol(cfg, d):
             hata(f"{yer}: {len(acik)} açıklama (2–4 olmalı)")
         if len(set(bas)) != len(bas):
             hata(f"{yer}: tekrarlanan başlık var")
+        for x in ag.get("basliklar", []) + ag.get("aciklamalar", []):
+            if FIYAT_YASAK and _FIYAT.search(x):
+                hata(f"{yer}: fiyat geçiyor ama reklam.fiyat_goster=false → '{x}'")
         for x in bas:
             if len(x) > 30:
                 hata(f"{yer}: başlık {len(x)}>30 → '{x}'")
@@ -140,7 +149,9 @@ def google_kontrol(cfg, d):
 
 
 def main():
+    global FIYAT_YASAK
     cfg = ayarlar()
+    FIYAT_YASAK = not cfg.get("reklam", {}).get("fiyat_goster", True)
     d = degiskenler(cfg)
     config_kontrol(cfg)
     n_meta = meta_kontrol(cfg, d)

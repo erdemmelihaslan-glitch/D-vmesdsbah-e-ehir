@@ -5,29 +5,36 @@
 # ============================================================
 
 studyo:
-  adi: "DOLDUR Stüdyo Adı"            # örn. "Mürekkep Tattoo"
-  sanatci: "DOLDUR Sanatçı Adı"        # yüzün olan kişi — reklamlarda kişi > marka
-  instagram: "DOLDUR_instagram"        # @ olmadan
-  telefon_whatsapp: "905000000000"     # başında 90, boşluksuz (wa.me linki için)
-  adres: "DOLDUR Açık adres, Bahçeşehir, Başakşehir/İstanbul"
-  google_maps_link: "https://maps.google.com/?q=Bahcesehir+Istanbul"   # İşletme profilinin linki
+  adi: "Erdem Melih Tattoo Studio"
+  sanatci: "Erdem Melih Aslan"         # yüzün olan kişi — reklamlarda kişi > marka
+  instagram: "erdemmelih.ink"          # @ olmadan
+  telefon_whatsapp: "905445819624"     # başında 90, boşluksuz (wa.me linki için)
+  adres: "Bahçeşehir 1. Kısım Mah. Güvercin Sok. No:20, Başakşehir/İstanbul"
+  google_maps_link: "https://www.google.com/maps/search/?api=1&query=41.0629469,28.6964994"   # İşletme Profili açılınca onun linkiyle değiştir
   google_yorum_linki: "DOLDUR"         # İşletme Profili > "Yorum iste" linki
-  web_sitesi: "https://DOLDUR.com"     # yoksa landing/index.html'i yayınlayacağız
+  web_sitesi: "https://instagram.com/erdemmelih.ink"   # landing yayınlanınca değişecek (Google Ads için gerekli)
   calisma_saatleri: "Her gün 11:00–21:00"
   # Stüdyonun konumu (Google Maps'te adrese sağ tık → koordinatı kopyala)
-  konum:
-    enlem: 41.0700
-    boylam: 28.6700
+  konum:                               # Güvercin Sokak, Bahçeşehir 1. Kısım (OpenStreetMap)
+    enlem: 41.0629
+    boylam: 28.6965
 
 # Hangi stilleri yapıyorsun? Yapmadıklarını false yap — reklamlar buna göre üretilir.
+# Uzmanlık: BLACK & GREY REALİZM. Reklamlar bunun üzerine kurulu; diğer stiller yapılır ama reklam yüzü değil.
+uzmanlik: "Black & Grey Realizm"
 stiller:
   minimal_fine_line: true
   yazi_isim_tarih: true
   blackwork: true
   realistik_portre: true
-  renkli: false
+  renkli: true
   dovme_kapatma_cover_up: true
   piercing: false
+
+reklam:
+  fiyat_goster: false             # Stüdyo kararı: reklamlarda fiyat YOK (kontrol.py denetler)
+  ucretsiz_rotus: true            # Sahibi onayladı
+  ucretsiz_tasarim_gorusmesi: true
 
 # Fiyatlar (TL). Reklamda "başlangıç fiyatı" göstermek dönüşümü artırır.
 # Henüz bilinmiyorsa boş bırakma, tahmini yaz — sonra güncellenir.
@@ -36,11 +43,11 @@ fiyatlar:
   orta_boy_baslangic: 6000        # ~10-15 cm
   buyuk_seans_gunluk: 15000       # tam gün seans
   kapora: 1000                    # randevu kaporası
-  ortalama_is_tutari: 5000        # raporlarda ROAS hesabı için
+  ortalama_is_tutari: 12000       # TAHMİN — realizm seansları için gerçek ortalamayı Erdem'den al (sadece rapor için, reklamda yok)
 
 # Reklam bütçesi
 butce:
-  aylik_toplam_tl: 15000          # 7500 / 15000 / 30000 önerilir
+  aylik_toplam_tl: 10000          # Sahibin bütçesi; öğrenme için gerekirse artırılabilir (kurul kararı: kurul/)
   # Kanal dağılımı (toplam 1.00 olmalı)
   dagilim:
     meta_kesif_reels: 0.20        # K1 — yeni kitle, video izleyen havuzu
@@ -53,9 +60,9 @@ butce:
 
 # Hedefleme
 hedefleme:
-  yaricap_km: 12                  # Bahçeşehir + Esenyurt, Avcılar, Beylikdüzü, Başakşehir
-  yas_min: 18                     # ASLA 18 altı yapma (Meta kuralı + yasa teklifi)
-  yas_max: 45
+  yaricap_km: 25                  # Realizm müşterisi sanatçı için yol gelir → Avrupa yakası batısı
+  yas_min: 21                     # ASLA 18 altı yapma. 21 = satın alma gücü kontrolü (Advantage+ min yaş kontrolü)
+  yas_max: 50
   diller: ["tr"]
 
 # Performans varsayımları — ilk 14 günden sonra GERÇEK verinle değiştir
